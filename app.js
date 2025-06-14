@@ -22,8 +22,9 @@ if (env !== "staging" && env !== "production") {
 
 const corsOptions = {
   origin: [
-    "http://192.168.0.147",
-    "http://192.168.0.147:8081",
+    "http://172.31.1.100",
+    "http://172.31.1.100:8081",
+    "http://172.31.1.100:8080",
     "http://localhost:8080",
     "http://localhost:8081",
     "https://m-vibe.com",
