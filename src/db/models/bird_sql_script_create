@@ -1,0 +1,136 @@
+---------- 2024-09-06 ----------
+CREATE TABLE [dbo].[tbl_warehouse] (
+    [id]          INT            IDENTITY (1, 1) NOT NULL,
+    [wh_id]       VARCHAR (50)   NOT NULL,
+    [wh_name]     NVARCHAR (150) NULL,
+    [wh_status]   CHAR (1)       NULL,
+    [user_create] INT            NULL,
+    [user_update] INT            NULL,
+    [created_at]  DATETIME2 (7)  CONSTRAINT [DEFAULT_tbl_warehouse_created_at] DEFAULT (getdate()) NULL,
+    [updated_at]  DATETIME2 (7)  CONSTRAINT [DEFAULT_tbl_warehouse_updated_at] DEFAULT (getdate()) NULL,
+    CONSTRAINT [PK_tbl_warehouse] PRIMARY KEY CLUSTERED ([wh_id] ASC, [id] ASC)
+);
+
+
+
+
+set identity_insert [tbl_warehouse] on;
+
+
+insert [tbl_warehouse] ([id],[wh_id],[wh_name],[wh_status],[user_create],[user_update],[created_at],[updated_at])
+select 1,'AA1',N'คลังสินค้าหลัก','A',9,NULL,'3110-09-05 05:56:39.7970000','3110-09-05 05:56:39.7970000' UNION ALL
+select 2,'AA2',N'คลังวัตถุดิบ','A',9,NULL,'3110-09-05 05:56:51.0770000','3110-09-05 05:56:51.0770000';
+
+set identity_insert [tbl_warehouse] off;
+
+
+CREATE TABLE [dbo].[tbl_location] (
+    [id]          INT            IDENTITY (1, 1) NOT NULL,
+    [wh_id]       INT            NULL,
+    [lc_id]       VARCHAR (50)   NOT NULL,
+    [lc_name]     NVARCHAR (150) NULL,
+    [lc_status]   CHAR (1)       NULL,
+    [user_create] INT            NULL,
+    [user_update] INT            NULL,
+    [created_at]  DATETIME2 (7)  CONSTRAINT [DEFAULT_tbl_location_created_at] DEFAULT (getdate()) NULL,
+    [updated_at]  DATETIME2 (7)  CONSTRAINT [DEFAULT_tbl_location_updated_at] DEFAULT (getdate()) NULL,
+    CONSTRAINT [PK_tbl_location] PRIMARY KEY CLUSTERED ([lc_id] ASC, [id] ASC)
+);
+
+
+
+set identity_insert [tbl_location] on;
+
+insert [tbl_location] ([id],[wh_id],[lc_id],[lc_name],[lc_status],[user_create],[user_update],[created_at],[updated_at])
+select 4,1,'L5-01',N'กระสอบสำเร็จรูปใหญ่','A',9,9,'2567-09-06 02:43:10.3350000','2567-09-06 02:47:48.2750000' UNION ALL
+select 5,1,'L5-02',N'กระสอบสำเร็จรูปเล็ก','A',9,NULL,'2567-09-06 02:48:04.5790000','2567-09-06 02:48:04.5790000';
+
+set identity_insert [tbl_location] off;
+
+
+CREATE TABLE [dbo].[tbl_sheft] (
+    [id]          INT            IDENTITY (1, 1) NOT NULL,
+    [wh_id]       INT            NULL,
+    [lc_id]       INT            NULL,
+    [shf_id]      VARCHAR (50)   NOT NULL,
+    [sf_name]     NVARCHAR (150) NULL,
+    [sf_status]   CHAR (1)       NULL,
+    [user_create] INT            NULL,
+    [user_update] INT            NULL,
+    [created_at]  DATETIME2 (7)  CONSTRAINT [DEFAULT_tbl_sheft_created_at] DEFAULT (getdate()) NULL,
+    [updated_at]  DATETIME2 (7)  CONSTRAINT [DEFAULT_tbl_sheft_updated_at] DEFAULT (getdate()) NULL,
+    CONSTRAINT [PK_tbl_sheft] PRIMARY KEY CLUSTERED ([shf_id] ASC, [id] ASC)
+);
+
+
+
+
+set identity_insert [tbl_sheft] on;
+
+
+insert [tbl_sheft] ([id],[wh_id],[lc_id],[shf_id],[sf_name],[sf_status],[user_create],[user_update],[created_at],[updated_at])
+select 3,1,4,'ชั้น 1',N'ชั้น 1','A',9,9,'2567-09-06 02:48:43.8130000','2567-09-06 02:52:03.3900000' UNION ALL
+select 4,1,4,'ชั้น 2',N'ชั้น 2','A',9,NULL,'2567-09-06 02:49:04.8200000','2567-09-06 02:49:04.8200000';
+
+set identity_insert [tbl_sheft] off;
+
+
+CREATE TABLE [dbo].[invent_trans] (
+    [id]           INT             IDENTITY (1, 1) NOT NULL,
+    [item_id]      NVARCHAR (50)   NULL,
+    [status_issue] INT             NULL,
+    [qty]          NUMERIC (18, 2) NULL,
+    [currency]     NVARCHAR (50)   NULL,
+    [transtype]    INT             NULL,
+    [costamount]   NUMERIC (18, 4) NULL,
+    [inventdim_id] INT             NULL,
+    [user_create]  INT             CONSTRAINT [DF_invent_trans_user_create] DEFAULT ((0)) NOT NULL,
+    [user_update]  INT             CONSTRAINT [DF_invent_trans_user_update] DEFAULT ((0)) NOT NULL,
+    [created_at]   DATETIME2 (7)   CONSTRAINT [DF_invent_trans_created_at] DEFAULT (getdate()) NULL,
+    [updated_at]   DATETIME2 (7)   CONSTRAINT [DF_invent_trans_updated_at] DEFAULT (getdate()) NULL,
+    CONSTRAINT [PK_invent_trans] PRIMARY KEY CLUSTERED ([id] ASC)
+);
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'1=receive , 2=issue', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'invent_trans', @level2type = N'COLUMN', @level2name = N'status_issue';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'1=purchase 2=sales 3=production 4=inv 5=transer 6=adj', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'invent_trans', @level2type = N'COLUMN', @level2name = N'transtype';
+
+
+set identity_insert [invent_trans] on;
+
+
+insert [invent_trans] ([id],[item_id],[status_issue],[qty],[currency],[transtype],[costamount],[inventdim_id],[user_create],[user_update],[created_at],[updated_at])
+select 3,N'SM-P-CLX-0409       ',1,9150.00,N'THB',3,591.3600,4,9,0,'2567-09-06 03:05:39.3410000','2567-09-06 03:05:39.3410000';
+
+set identity_insert [invent_trans] off;
+
+
+CREATE TABLE [dbo].[invent_sum] (
+    [item_id]      NVARCHAR (50)   NOT NULL,
+    [inventdim_id] INT             NOT NULL,
+    [qty]          NUMERIC (18, 4) NULL,
+    [user_create]  INT             CONSTRAINT [DF_invent_sum_user_create] DEFAULT ((0)) NOT NULL,
+    [user_update]  INT             CONSTRAINT [DF_invent_sum_user_update] DEFAULT ((0)) NOT NULL,
+    [created_at]   DATETIME2 (7)   CONSTRAINT [DF_invent_sum_created_at] DEFAULT (getdate()) NULL,
+    [updated_at]   DATETIME2 (7)   CONSTRAINT [DF_invent_sum_updated_at] DEFAULT (getdate()) NULL,
+    CONSTRAINT [PK_invent_sum] PRIMARY KEY CLUSTERED ([item_id] ASC, [inventdim_id] ASC)
+);
+
+
+
+insert [invent_sum] ([item_id],[inventdim_id],[qty],[user_create],[user_update],[created_at],[updated_at])
+select N'SM-P-CLX-0409       ',4,9150.0000,9,0,'2567-09-06 03:05:39.3460000','2567-09-06 03:05:39.3460000';
+
+---------- 2024-09-06 ----------
+
+---------- 2024-09-08 ----------
+ALTER TABLE tbl_opn_ord
+ADD [routing_id] INT  CONSTRAINT [DEFAULT_tbl_opn_ord_routing_id] DEFAULT ((0)) NOT NULL,
+  [iot_um_conv]  DECIMAL (18, 4) CONSTRAINT [DEFAULT_tbl_opn_ord_iot_um_conv] DEFAULT ((0)) NOT NULL
+;
+   
+---------- 2024-09-08 ----------
