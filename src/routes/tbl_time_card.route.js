@@ -31,6 +31,8 @@ router.post(
   tbl_time_card_controller.end_time_card_detail
 );
 router.post("/:tc_id/post", tbl_time_card_controller.post_time_card);
+router.post("/:tc_id/post-v2", tbl_time_card_controller.post_time_card_v2);
+
 router.post("/:tc_id/post-job", tbl_time_card_controller.post_job);
 router.post("/:tc_id/log", tbl_time_card_controller.upsert_log);
 router.post(
@@ -38,16 +40,31 @@ router.post(
   tbl_time_card_controller.bulk_upsert_log_defect
 );
 router.delete("/:tc_id", tbl_time_card_controller.remove_time_card);
-router.delete("/deletedetail/:tc_id", tbl_time_card_controller.remove_time_card_detail);
+router.delete(
+  "/deletedetail/:tc_id",
+  tbl_time_card_controller.remove_time_card_detail
+);
 router.delete("/:tc_id/log/:log_id", tbl_time_card_controller.remove_log);
 router.delete(
   "/:tc_id/log/:log_id/defect/:id",
   tbl_time_card_controller.remove_defect
 );
 
-router.post("/get/getdeletejobbycompany", tbl_time_card_controller.getdeletejobbycompany);
-router.get("/get/list_doc_running_no_option/:company_id", tbl_time_card_controller.list_doc_running_no_option);
-router.get("/time_card/work_order/option/:company_id", tbl_time_card_controller.listtimecardWorkOrderOptions);
-router.post("/createforiotmapping", tbl_time_card_controller.createforiotmapping);
+router.post(
+  "/get/getdeletejobbycompany",
+  tbl_time_card_controller.getdeletejobbycompany
+);
+router.get(
+  "/get/list_doc_running_no_option/:company_id",
+  tbl_time_card_controller.list_doc_running_no_option
+);
+router.get(
+  "/time_card/work_order/option/:company_id",
+  tbl_time_card_controller.listtimecardWorkOrderOptions
+);
+router.post(
+  "/createforiotmapping",
+  tbl_time_card_controller.createforiotmapping
+);
 
 module.exports = router;

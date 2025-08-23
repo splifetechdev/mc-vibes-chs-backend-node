@@ -76,4 +76,6 @@ router.use("/report_all", require("./reportall.route"));
 
 router.use("/costing", require("./costing.route"));
 
+router.use("/shift_ot", require("./tbl_shift_ot.route"));
+
 module.exports = router;

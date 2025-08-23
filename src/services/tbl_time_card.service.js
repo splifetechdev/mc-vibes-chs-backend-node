@@ -44,6 +44,12 @@ exports.upsert_defect = async (log_id, defect, requester_id) => {
 exports.post_time_card = async (timeCard) =>
   await tbl_time_card_repo.post_time_card(timeCard);
 
+exports.post_time_card_v2 = async (timeCard) =>
+  await tbl_time_card_repo.post_time_card_v2(timeCard, {
+    debug: false,
+    dryRun: false,
+  });
+
 exports.remove_time_card = async (tc_id) =>
   tbl_time_card_repo.remove_time_card(tc_id);
 
@@ -94,11 +100,12 @@ exports.create = async (data) => {
 exports.getdeletejobbycompany = async (data) =>
   await tbl_time_card_repo.getdeletejobbycompany(data);
 
-
 exports.list_doc_running_no_option = async (company_id) =>
   await tbl_time_card_repo.list_doc_running_no_option(company_id);
 
 exports.listtimecardWorkOrderOptions = async (company_id) => {
-  const result = await tbl_time_card_repo.listtimecardWorkOrderOptions(company_id);
+  const result = await tbl_time_card_repo.listtimecardWorkOrderOptions(
+    company_id
+  );
   return result;
 };

@@ -378,6 +378,27 @@ exports.post_time_card = async (req, res) => {
   }
 };
 
+exports.post_time_card_v2 = async (req, res) => {
+  try {
+    const { tc_id } = req.params;
+    const timeCard = await tbl_time_card_service.list_log(tc_id);
+    if (timeCard.status === "post") {
+      return res.status(400).send({ error: "this time card is posted" });
+    }
+
+    if (timeCard.tbl_time_card_details.length === 0) {
+      return res
+        .status(400)
+        .send({ error: "this time card is not have any details" });
+    }
+
+    const result = await tbl_time_card_service.post_time_card_v2(timeCard);
+    res.json(result);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+};
+
 exports.upsert_log = async (req, res) => {
   try {
     const log = req.body;
