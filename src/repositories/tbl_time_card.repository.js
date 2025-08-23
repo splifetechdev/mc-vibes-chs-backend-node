@@ -989,3 +989,11 @@ exports.listtimecardWorkOrderOptions = async (company_id) => {
   );
   return queryResult;
 };
+
+exports.time_card_detail_check_opn_id_ues = async (opn_id) => {
+  const queryResult = await db.sequelize.query(
+    `SELECT COUNT(id) as ctc from tbl_time_card_detail where opn_ord_id = ${opn_id}`,
+    { type: db.sequelize.QueryTypes.SELECT }
+  );
+  return queryResult;
+};

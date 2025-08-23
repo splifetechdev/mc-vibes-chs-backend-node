@@ -109,3 +109,7 @@ exports.listtimecardWorkOrderOptions = async (company_id) => {
   );
   return result;
 };
+
+exports.time_card_detail_check_opn_id_ues = async (opn_id) => {
+  return await tbl_time_card_repo.time_card_detail_check_opn_id_ues(opn_id);
+};

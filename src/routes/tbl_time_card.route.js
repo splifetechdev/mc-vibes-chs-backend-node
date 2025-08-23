@@ -67,4 +67,9 @@ router.post(
   tbl_time_card_controller.createforiotmapping
 );
 
+router.get(
+  "/time_card_detail/check_opn_id_ues/:opn_id",
+  tbl_time_card_controller.time_card_detail_check_opn_id_ues
+);
+
 module.exports = router;

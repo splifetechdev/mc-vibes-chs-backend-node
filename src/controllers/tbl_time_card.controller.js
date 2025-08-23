@@ -1442,3 +1442,12 @@ exports.listtimecardWorkOrderOptions = async (req, res) =>
         req.params.company_id
       )
     );
+
+exports.time_card_detail_check_opn_id_ues = async (req, res) =>
+  res
+    .status(200)
+    .send(
+      await tbl_time_card_service.time_card_detail_check_opn_id_ues(
+        req.params.opn_id
+      )
+    );
