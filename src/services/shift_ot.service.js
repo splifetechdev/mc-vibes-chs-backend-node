@@ -1,15 +1,12 @@
-const shiftOTService = require("../services/shift_ot.service");
+const shiftOTRepository = require("../repositories/shift_ot.repository");
 
-exports.getAll = async (req, res) => res.json(await shiftOTService.findAll());
+exports.findAll = async () => await shiftOTRepository.findAll();
 
-exports.getShiftOTByShiftID = async (req, res) =>
-  res.json(await shiftOTService.findByShiftID(req.params.shift_id));
+exports.findByShiftID = async (shift_id) =>
+  await shiftOTRepository.findByShiftID(shift_id);
 
-exports.create = async (req, res) =>
-  res.json(await shiftOTService.create(req.body));
+exports.create = async (data) => await shiftOTRepository.create(data);
 
-exports.update = async (req, res) =>
-  res.json(await shiftOTService.update(req.params.id, req.body));
+exports.update = async (id, data) => await shiftOTRepository.update(id, data);
 
-exports.delete = async (req, res) =>
-  res.json(await shiftOTService.delete(req.params.id));
+exports.delete = async (id) => await shiftOTRepository.delete(id);
