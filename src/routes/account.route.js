@@ -40,4 +40,6 @@ router.put("/resetPassword/:id", accountController.resetPassword);
 
 router.post("/changeapprovaluser", accountController.changeapprovaluser);
 
+router.post("/import_employee", accountController.import_employee);
+
 module.exports = router;

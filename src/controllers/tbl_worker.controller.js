@@ -4,6 +4,10 @@ const tbl_workerService = require("../services/tbl_worker.service");
 const tbl_time_card_service = require("../services/tbl_time_card.service");
 const doc_running_service = require("../services/doc_running.service");
 const u_define_module_service = require("../services/u_define_module.service");
+const departmentService = require("../services/department.service");
+const positionService = require("../services/position.service");
+const divisionService = require("../services/division.service");
+const sectionService = require("../services/section.service");
 const timezone = require("dayjs/plugin/timezone");
 const utc = require("dayjs/plugin/utc");
 const dayjs = require("dayjs");
@@ -271,3 +275,73 @@ exports.checkIn = async (req, res) => {
     });
   }
 };
+
+
+exports.import_worker = async (req, res) => {
+  let dataAllinsertlength = [];
+  let dataAllfaillength = [];
+  let newData = [];
+  if(req.body.length > 0){
+    newData = req.body.slice(2);
+    // return res.json({ message: "No data" });
+    newData.forEach(async(item,index) => {
+      const checkemp_id =  await tbl_workerService.findByemp_id(String(item[0]),req.requester_company_id);
+      const getdapartment_id =  await departmentService.findBycode(String(item[8]),req.requester_company_id);
+      const getposition_id =  await positionService.findByname(String(item[9]),req.requester_company_id);
+      const getdivision_id =  await divisionService.findBycode(String(item[10]),req.requester_company_id);
+      const getsection_id =  await sectionService.findBycode(String(item[11]),req.requester_company_id);
+      
+      // const checkemp_id =  await tbl_workerService.findByemp_id(String(item.emp_id));
+     if(checkemp_id?.emp_id || !getdapartment_id?.id || !getposition_id?.id){
+      // console.log("ไม่มีข้อมูล");
+      dataAllfaillength.push(item);
+     }else{
+      let data = {
+        emp_id: item[0],
+        email:"",
+        prename_th: item[1],
+        firstname: item[2],
+        lastname: item[3],
+        prename_en: item[4],
+        firstname_en: item[5],
+        lastname_en: item[6],
+        abbname_en: item[7],
+        department_id: getdapartment_id?.id,
+        position_id: getposition_id?.id,
+        division_id:getdivision_id?.id ?? null,
+        section_id:getsection_id?.id ?? null,
+        level: item[12],
+        entry_date: item[13],
+        user_role:"WORKER",
+        email_verified:0,
+        company_id: req.requester_company_id,
+        authorize_id: 2,
+        emp_rate: item[14],
+        emp_status:"A",
+        image:"",
+        user_create:req.requester_id,
+        user_update:req.requester_id,
+      };
+      // console.log("data:", data);
+
+      try {
+          dataAllinsertlength.push(data);
+        await tbl_workerService.add(data);
+     
+      } catch (error) {
+          console.log(error)
+        dataAllfaillength.push(data);
+      }
+     }
+     if(index == newData.length - 1){
+      res.json({ message: "Import data successfully", total:newData.length, insert:dataAllinsertlength.length, fail:newData.length-dataAllinsertlength.length });
+      return;
+
+     }
+    });
+  }else{
+    res.json({ message: "No data" });
+    return;
+  }
+ 
+}

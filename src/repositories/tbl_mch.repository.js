@@ -6,7 +6,7 @@ exports.find_all = async (company_id) =>
     where: {
       company_id,
     },
-    include: [{ model: db.company }, { model: db.tbl_work_center }],
+     include: [{ model: db.company }, { model: db.tbl_work_center, include:[{ model: db.tbl_work_center_group }] }],
   });
 
 exports.findAllMchToAdjustPOByCompany = async (company_id) =>
@@ -204,3 +204,13 @@ exports.getdataganttchartday = async (work_center_id, data) =>
       },
     ],
   });
+
+
+    exports.findBy_MachineID = async (machine_id,company_id) =>
+    await db.tbl_mch.findOne({
+      where: {
+        machine_id:machine_id,
+        company_id:company_id,
+      },
+    });
+  

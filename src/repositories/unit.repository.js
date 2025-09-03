@@ -95,3 +95,11 @@ exports.delete = async (id) =>
       id: id,
     },
   });
+
+  exports.findUnitByunit_name = async (unit_name,company_id) =>
+  await db.tbl_unit.findOne({
+     where: {
+      unit_name:unit_name,
+      company_id:company_id,
+    },
+  });

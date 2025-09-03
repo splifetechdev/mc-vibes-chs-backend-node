@@ -4,6 +4,10 @@ const multerConfig = require("../configs/multer");
 const upload = multer(multerConfig.config).single(multerConfig.keyUpload);
 const mailService = require("../services/mail.service");
 const VersionService = require("../services/version.service");
+const departmentService = require("../services/department.service");
+const positionService = require("../services/position.service");
+const divisionService = require("../services/division.service");
+const sectionService = require("../services/section.service");
 
 // const imagesService = require("../services/fileservice.service");
 
@@ -423,4 +427,74 @@ exports.changeapprovaluser = async (req, res) => {
   await accountService.changeapprovallv1(req.body);
   await accountService.changeapprovallv2(req.body);
   res.json(await accountService.changeapprovallv3(req.body));
+}
+
+exports.import_employee = async (req, res) => {
+  let dataAllinsertlength = [];
+  let dataAllfaillength = [];
+  let newData = [];
+  if(req.body.length > 0){
+    newData = req.body.slice(2);
+    // return res.json({ message: "No data" });
+    newData.forEach(async(item,index) => {
+      const checkemp_id =  await accountService.findByemp_id(String(item[0]),req.requester_company_id);
+      const getdapartment_id =  await departmentService.findBycode(String(item[10]),req.requester_company_id);
+      const getposition_id =  await positionService.findByname(String(item[11]),req.requester_company_id);
+      const getdivision_id =  await divisionService.findBycode(String(item[12]),req.requester_company_id);
+      const getsection_id =  await sectionService.findBycode(String(item[13]),req.requester_company_id);
+      
+      // const checkemp_id =  await accountService.findByemp_id(String(item.emp_id));
+      // || !getdivision_id?.id || !getsection_id?.id
+     if(checkemp_id?.emp_id || !getdapartment_id?.id || !getposition_id?.id){
+      // console.log("ไม่มีข้อมูล");
+      dataAllfaillength.push(item);
+     }else{
+      let data = {
+        emp_id: item[0],
+        username: item[1],
+        email: item[2]?item[2]:"",
+        prename_th: item[3],
+        firstname: item[4],
+        lastname: item[5],
+        prename_en: item[6],
+        firstname_en: item[7],
+        lastname_en: item[8],
+        abbname_en: item[9],
+        department_id: getdapartment_id?.id,
+        position_id: getposition_id?.id,
+        division_id: getdivision_id?.id ?? null,
+        section_id: getsection_id?.id ?? null,
+        level: item[14],
+        entry_date: item[15],
+        password:item[1],
+        user_role:"EMPLOYEE",
+        email_verified:0,
+        company_id: req.requester_company_id,
+        authorize_id: 2,
+        emp_rate: 0,
+        emp_status:"A",
+        image:"",
+        user_create:req.requester_id,
+        user_update:req.requester_id,
+      };
+      // console.log("data:", data);
+      try {
+        dataAllinsertlength.push(data);
+        await accountService.add(data);
+      } catch (error) {
+          console.log(error)
+        dataAllfaillength.push(data);
+      }
+     }
+     if(index == newData.length - 1){
+      res.json({ message: "Import data successfully", total:newData.length, insert:dataAllinsertlength.length, fail:newData.length-dataAllinsertlength.length });
+      return;
+
+     }
+    });
+  }else{
+    res.json({ message: "No data" });
+    return;
+  }
+ 
 }

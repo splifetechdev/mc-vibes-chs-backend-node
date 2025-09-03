@@ -73,3 +73,12 @@ exports.update = async (id, data) =>
         id: id
     }
 })
+
+
+exports.findBycode = async (code,company_id) =>
+await db.division.findOne({
+  where: {
+    code:code,
+    company_id:company_id,
+  },
+});

@@ -21,3 +21,5 @@ exports.getAlldatabycompany = async (id) =>
   await GroupItemRepository.getAlldatabycompany(id);
 
 exports.delete = async (id) => await GroupItemRepository.delete(id);
+
+exports.findGroupItemBygroup_item = async (group_item,company_id) => await GroupItemRepository.findGroupItemBygroup_item(group_item,company_id);

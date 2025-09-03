@@ -125,4 +125,13 @@ exports.update = async (id, data) =>
     where: {
         id: id
     }
-})
+});
+
+
+  exports.findBycode = async (code,company_id) =>
+  await db.department.findOne({
+    where: {
+      code:code,
+      company_id:company_id,
+    },
+  });

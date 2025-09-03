@@ -18,4 +18,6 @@ exports.update = async (id, data) =>
 
 exports.getAlldatabycompany = async (id) => await item_masterRepository.getAlldatabycompany(id);
 
-exports.delete = async (id) => await item_masterRepository.delete(id)
+exports.delete = async (id) => await item_masterRepository.delete(id);
+
+exports.findByitem_masterID = async (item_id,company_id) => await item_masterRepository.findByitem_masterID(item_id,company_id);

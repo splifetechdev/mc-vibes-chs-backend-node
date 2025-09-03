@@ -80,4 +80,12 @@ exports.update = async (id, data) =>
     where: {
         id: id
     }
-})
+});
+
+  exports.findByitem_masterID = async (item_id,company_id) =>
+  await db.item_master.findOne({
+    where: {
+      item_id:item_id,
+      company_id:company_id,
+    },
+  });

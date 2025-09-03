@@ -13,3 +13,5 @@ exports.update = async (id, data) =>
 exports.delete = async (id) => await tbl_sheftRepository.delete(id);
 
 exports.findSystemId = async () => await tbl_sheftRepository.findSystemId();
+
+exports.findtbl_sheftByshf_id = async (wh_id,lc_id,shf_id) => await tbl_sheftRepository.findtbl_sheftByshf_id(wh_id,lc_id,shf_id);

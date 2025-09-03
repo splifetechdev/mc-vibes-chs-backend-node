@@ -16,4 +16,6 @@ router.post("/changeapprovalworker", tbl_workerController.changeapprovalworker);
 
 router.post("/check-in", tbl_workerController.checkIn);
 
+router.post("/import_worker", tbl_workerController.import_worker);
+
 module.exports = router;

@@ -12,3 +12,5 @@ exports.update = async (id, data) => await defect_causeRepository.update(id, dat
 
 
 exports.delete = async (id) => await defect_causeRepository.delete(id);
+
+exports.findBywaste_code = async (waste_code) => await defect_causeRepository.findBywaste_code(waste_code);

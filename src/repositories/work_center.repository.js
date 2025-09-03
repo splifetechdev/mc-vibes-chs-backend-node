@@ -298,3 +298,11 @@ exports.findWorkCenterAllforganttchartday = async (id, data) =>
       },
     ],
   });
+
+exports.findBywc_id = async (wc_id,company_id) =>
+await db.tbl_work_center.findOne({
+  where: {
+    wc_id:wc_id,
+  company_id:company_id,
+  },
+});

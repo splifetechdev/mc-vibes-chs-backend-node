@@ -99,3 +99,11 @@ exports.delete = async (id) =>
       id: id,
     },
   });
+
+exports.findGroupItemBygroup_item = async (group_item,company_id) =>
+await db.tbl_group_item.findOne({
+  where: {
+    group_item:group_item,
+    company_id:company_id,
+  },
+});

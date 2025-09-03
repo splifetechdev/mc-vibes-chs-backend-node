@@ -19,3 +19,5 @@ exports.getAlldatabycompany = async (id) =>
   await ItemTypeRepository.getAlldatabycompany(id);
 
 exports.delete = async (id) => await ItemTypeRepository.delete(id);
+
+exports.findItemTypeByitem_type = async (item_type,company_id) => await ItemTypeRepository.findItemTypeByitem_type(item_type,company_id);

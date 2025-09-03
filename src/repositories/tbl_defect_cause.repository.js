@@ -41,3 +41,10 @@ exports.delete = async (id) =>
       id: id,
     },
   });
+
+exports.findBywaste_code = async (waste_code) =>
+  await db.tbl_work_center.findOne({
+    where: {
+      waste_code:waste_code,
+    },
+  });

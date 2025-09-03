@@ -36,4 +36,6 @@ router.post(
   tbl_mch_controller.getdataganttchart
 );
 
+router.post("/import_mch", tbl_mch_controller.import_mch);
+
 module.exports = router;

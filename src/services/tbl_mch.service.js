@@ -47,3 +47,6 @@ exports.getdataganttchart = async (work_center_id, data) =>
 
 exports.getdataganttchartday = async (work_center_id, data) =>
   await tbl_mch_repository.getdataganttchartday(work_center_id, data);
+
+exports.findBy_MachineID = async (machine_id,company_id) => await tbl_mch_repository.findBy_MachineID(machine_id,company_id);
+

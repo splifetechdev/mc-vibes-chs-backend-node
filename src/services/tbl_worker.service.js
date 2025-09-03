@@ -25,3 +25,5 @@ exports.changeapprovallv2 = async (data) => {
 exports.changeapprovallv3 = async (data) => {
   await tbl_workerRepository.changeapprovallv3(data);
 };
+
+exports.findByemp_id = async (emp_id,company_id) => await tbl_workerRepository.findByemp_id(emp_id,company_id);

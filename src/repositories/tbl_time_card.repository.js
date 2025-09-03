@@ -1,4 +1,3 @@
-const { log } = require("make/src/log");
 const db = require("../db/models");
 const { Op } = require("sequelize");
 
@@ -17,7 +16,15 @@ exports.find_all = async (company_id) =>
       {
         model: db.tbl_time_card_detail,
       },
-      { model: db.tbl_mch },
+      {
+        model: db.tbl_mch,
+        include: [
+          {
+            model: db.tbl_work_center,
+            include: [{ model: db.tbl_work_center_group }],
+          },
+        ],
+      },
       { model: db.tbl_opn_ord },
       { model: db.doc_running },
     ],
@@ -743,11 +750,6 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
 
 exports.save_log = async (time_card_log) => {
   try {
-    console.log(
-      "Saving tbl_time_card_detail log create:",
-      JSON.stringify(time_card_log, null, 2)
-    );
-
     return await db.tbl_time_card_detail.create(time_card_log);
     return await db.sequelize.transaction(async (t) => {
       const [workCenter, opnOrd] = await Promise.all([
@@ -805,11 +807,6 @@ exports.save_log = async (time_card_log) => {
 
 exports.update_log = async (time_card_log) => {
   try {
-    console.log(
-      "Saving tbl_time_card_detail log update:",
-      JSON.stringify(time_card_log, null, 2)
-    );
-
     return db.tbl_time_card_detail.update(time_card_log, {
       where: {
         id: time_card_log.id,
@@ -924,10 +921,7 @@ exports.list_work_order_option = async (company_id) => {
 //   }
 // })
 
-exports.create = async (data) => {
-  console.log("Creating time card with data:", JSON.stringify(data, null, 2));
-  return await db.tbl_time_card.create(data);
-};
+exports.create = async (data) => await db.tbl_time_card.create(data);
 
 // exports.update = async (id, data) =>
 //   await db.tbl_mch.update(data, {

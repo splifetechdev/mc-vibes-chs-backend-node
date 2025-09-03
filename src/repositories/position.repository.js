@@ -66,3 +66,12 @@ exports.update = async (id, data) =>
       id: id,
     },
   });
+
+
+exports.findByname = async (name,company_id) =>
+await db.position.findOne({
+   where: {
+    name:name,
+    company_id:company_id,
+  },
+});

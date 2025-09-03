@@ -99,3 +99,11 @@ exports.delete = async (id) =>
       id: id,
     },
   });
+
+exports.findItemTypeByitem_type = async (item_type,company_id) =>
+await db.tbl_item_type.findOne({
+   where: {
+    item_type:item_type,
+    company_id:company_id,
+  },
+});

@@ -29,4 +29,7 @@ router.get("/get/All/:id", WorkCenterGroupController.getAlldatabycompany);
 router.delete("/:id", WorkCenterGroupController.delete);
 
 router.post("/wcgganttchart/:id", WorkCenterGroupController.findWorkCenterAllforganttchart);
+
+router.post("/import_work_center_group", WorkCenterGroupController.import_work_center_group);
+
 module.exports = router;

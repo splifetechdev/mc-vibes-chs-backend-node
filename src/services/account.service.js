@@ -168,3 +168,5 @@ function parseDate(date) {
   const [year, month, day] = date.split("/");
   return `${day.padStart(2, "0")}-${month.padStart(2, "0")}-${year}`;
 }
+
+exports.findByemp_id = async (emp_id,company_id) => await accountRepository.findByemp_id(emp_id,company_id);

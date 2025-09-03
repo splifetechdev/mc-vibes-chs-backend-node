@@ -19,3 +19,5 @@ exports.update = async (id, data) =>
 exports.getAlldatabycompany = async (id) => await divisionRepository.getAlldatabycompany(id);
 
 exports.delete = async (id) => await divisionRepository.delete(id)
+
+exports.findBycode = async (code,company_id) => await divisionRepository.findBycode(code,company_id);

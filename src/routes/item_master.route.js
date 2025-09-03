@@ -8,6 +8,7 @@ router.get("/get/All", item_masterController.getAlldata);
 router.post("/", item_masterController.create);
 router.put("/:id", item_masterController.update);
 router.get("/get/All/:id", item_masterController.getAlldatabycompany);
-router.delete('/:id', item_masterController.delete)
+router.delete('/:id', item_masterController.delete);
+router.post("/import_item_master", item_masterController.import_item_master);
 
 module.exports = router;

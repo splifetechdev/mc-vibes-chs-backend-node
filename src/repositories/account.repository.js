@@ -308,3 +308,12 @@ exports.changeapprovallv3 = async (data) =>
       },
     }
   );
+
+
+  exports.findByemp_id = async (emp_id,company_id) =>
+  await db.tbl_users.findOne({
+    where: {
+      emp_id:emp_id,
+      company_id:company_id,
+    },
+  });

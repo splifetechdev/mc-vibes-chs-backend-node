@@ -6,5 +6,6 @@ router.get("/getAllByID/:id/:u_define_id", defect_causeController.getAllByID);
 router.post("/", defect_causeController.create);
 router.put("/:id", defect_causeController.update);
 router.delete("/:id", defect_causeController.delete);
+router.post("/import_defect_cause", defect_causeController.import_defect_cause);
 
 module.exports = router;

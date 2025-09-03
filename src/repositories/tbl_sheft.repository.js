@@ -50,3 +50,17 @@ exports.findSystemId = async () =>
       type: db.sequelize.QueryTypes.SELECT,
     }
   );
+
+
+  exports.findtbl_sheftByshf_id = async (wh_id,lc_id,shf_id) =>
+  await db.sequelize.query(
+    `SELECT shf.id FROM tbl_sheft shf
+        inner join tbl_location lc 
+        on shf.lc_id = lc.id
+        inner join tbl_warehouse wh
+        on shf.wh_id = wh.id
+        where shf.shf_id='${shf_id}' and wh.wh_id='${wh_id}' and lc.lc_id='${lc_id}'`,
+    {
+      type: db.sequelize.QueryTypes.SELECT,
+    }
+  );

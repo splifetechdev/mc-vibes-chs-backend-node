@@ -24,4 +24,6 @@ router.delete("/:id", WorkCenterController.delete);
 
 router.post("/wcganttchart/:id", WorkCenterController.findWorkCenterAllforganttchart);
 
+router.post("/import_work_center", WorkCenterController.import_work_center);
+
 module.exports = router;

@@ -15,5 +15,6 @@ router.get(
 );
 router.get("/get/All/:id", DownTimeCauseController.getAlldatabycompany);
 router.delete("/:id", DownTimeCauseController.delete);
+router.post("/import_downtime_cause", DownTimeCauseController.import_downtime_cause);
 
 module.exports = router;

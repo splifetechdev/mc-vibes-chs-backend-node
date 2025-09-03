@@ -33,3 +33,5 @@ exports.findWorkCenterAllforganttchart = async (id,data) =>
 
   exports.findWorkCenterAllforganttchartday = async (id,data) =>
   await WorkCenterRepository.findWorkCenterAllforganttchartday(id,data);
+
+  exports.findBywc_id = async (wc_id,company_id) => await WorkCenterRepository.findBywc_id(wc_id,company_id);

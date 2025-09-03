@@ -160,6 +160,7 @@ exports.create = async (req, res) => {
     const data = req.body;
     const { doc_group_id } = data;
     const docRunning = await doc_running_service.findOneById(doc_group_id);
+    console.log(docRunning);
     const runningNumber = await doc_running_service.docGenerate(
       docRunning.module
     );
@@ -170,7 +171,6 @@ exports.create = async (req, res) => {
       created_by: req.requester_id,
       updated_by: req.requester_id,
     });
-
     res.json(result);
   } catch (error) {
     res.status(500).send({ error: error.message });
@@ -184,22 +184,19 @@ exports.createforiotmapping = async (req, res) => {
     const { mch_id } = data;
     const docRunning = await doc_running_service.findOneById(doc_group_id);
 
-    // console.log("createforiotmapping data:", JSON.stringify(data, null, 2));
-    // console.log("createforiotmapping mch_id.length:", mch_id.length);
-
-    for (let i = 0; i < 1; i++) {
+    for (let i = 0; i < mch_id.length; i++) {
       let runningNumber = await doc_running_service.docGenerate(
         docRunning.module
       );
       const result = await tbl_time_card_service.create({
         ...req.body,
-        mch_id: data.mch_id,
+        mch_id: mch_id[i],
         doc_running_id: doc_group_id,
         doc_running_no: runningNumber,
         created_by: req.requester_id,
         updated_by: req.requester_id,
       });
-      if (i === 0) {
+      if (i === mch_id.length - 1) {
         res.json(result);
       }
     }
@@ -245,9 +242,7 @@ const getReceiveQty = async (timecardDetailId, companyId) => {
   if (!plc) {
     return 0;
   }
-  const startDate = dayjs(timecardDetail.tbl_time_card.doc_date).format(
-    "YYYY-MM-DD"
-  );
+  const startDate = dayjs(timecardDetail.time_card_date).format("YYYY-MM-DD");
 
   const startAt = dayjs(`${startDate} ${timecardDetail.time_start}:00`);
   let endAt = dayjs(`${startDate} ${timecardDetail.time_end}:00`);
@@ -269,6 +264,7 @@ const getReceiveQty = async (timecardDetailId, companyId) => {
       company_id: companyId,
       rtg_id: timecardDetail.tbl_opn_ord.rtg_id,
       opn_id: timecardDetail.tbl_opn_ord.opn_id,
+      item_master_id: timecardDetail.tbl_opn_ord.item_master_id,
     },
   });
 
@@ -510,7 +506,13 @@ exports.get_time_card_detail = async (req, res) => {
         {
           model: db.tbl_worker,
         },
-        { model: db.tbl_mch, include: [db.tbl_work_center] },
+        {
+          model: db.tbl_mch,
+          include: {
+            model: db.tbl_work_center,
+            include: [{ model: db.tbl_work_center_group }],
+          },
+        },
         { model: db.item_master },
         { model: db.tbl_time_card_defect },
         { model: db.tbl_time_card_detail_worker, include: [db.tbl_worker] },
@@ -771,10 +773,10 @@ const getReportByDateAndShiftz = async (
 
       let filteredTimecardDetailByShift = timecardDetailByOpn;
 
-      if (shift && shift.end_time) {
+      if (shift && shift.start_time) {
         const endTimeForFilter = dayjs.tz(
           `${dayjs.tz(date, "Asia/Bangkok").format("YYYY-MM-DD")} ${dayjs
-            .tz(shift.end_time, "utc")
+            .tz(shift.start_time, "utc")
             .format("HH:mm:ss")}`,
           "Asia/Bangkok"
         );
@@ -784,7 +786,7 @@ const getReportByDateAndShiftz = async (
           }
           const tcDateTime = dayjs.tz(
             `${dayjs.tz(date, "Asia/Bangkok").format("YYYY-MM-DD")} ${dayjs
-              .tz(t.tbl_time_card.tbl_shift.end_time, "utc")
+              .tz(t.tbl_time_card.tbl_shift.start_time, "utc")
               .format("HH:mm:ss:SSS")}`,
             "Asia/Bangkok"
           );
@@ -870,7 +872,9 @@ const getReportByDateAndShiftz = async (
       foundMachine.total_work_hours += cur.isDownTime ? 0 : cur.work_hours;
       foundMachine.total_acc_qty += parseFloat(cur.dataValues.acc_qty);
       foundMachine.total_defects += cur.dataValues.defect_count;
-
+      //   console.log("cur.dataValues.downtime");
+      // console.log(cur.work_hours);
+      // console.log(cur);
       foundMachine.total_qty += cur.qty;
       foundMachine.total_downtime += cur.work_hours;
       foundMachine.total_standard_qty += cur.dataValues.standardPcs;
