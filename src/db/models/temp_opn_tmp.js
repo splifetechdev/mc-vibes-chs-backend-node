@@ -16,7 +16,7 @@ module.exports = (sequelize, DataTypes) => {
       doc_running_no: DataTypes.STRING,
       item_id: DataTypes.INTEGER,
       item_master_id: DataTypes.INTEGER,
-      order_qty: DataTypes.DECIMAL,
+      order_qty: DataTypes.INTEGER,
       rtg_id: DataTypes.STRING,
       opn_id: DataTypes.STRING,
       pcs_hr: DataTypes.INTEGER,
