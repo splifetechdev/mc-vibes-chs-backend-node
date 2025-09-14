@@ -129,7 +129,7 @@ exports.findIdByDocRunningV2 = async (doc_running) =>
 
 exports.findAdjustPlanDraftByDocRunning = async (doc_running) =>
   await db.sequelize.query(
-    `SELECT tpopd.* ,mch.machine_id as mch_name,
+    `SELECT tpopd.* ,mch.name as mch_name,
             FORMAT(convert(datetime,convert(varchar(16), taot.opn_start_date_time, 120)),'dd/MM/yyyy HH:mm') as fopn_start_date_time,
             FORMAT(convert(datetime,convert(varchar(16), taot.opn_end_date_time, 120)),'dd/MM/yyyy HH:mm') as fopn_end_date_time, 
             cast(tpopd.setup_time as decimal(10,2)) as fsetup_time,
