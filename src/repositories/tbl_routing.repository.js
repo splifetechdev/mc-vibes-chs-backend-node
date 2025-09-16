@@ -267,3 +267,11 @@ exports.getItemhavestd_cost = async (item_master_id, company_id) =>
     },
     raw: true,
   });
+
+exports.V_Routing_From_Econs = async (doc_running, id) =>
+await db.sequelize.query(
+  `SELECT * FROM V_RTG_From_Econs;`,
+  {
+    type: db.sequelize.QueryTypes.SELECT,
+  }
+);

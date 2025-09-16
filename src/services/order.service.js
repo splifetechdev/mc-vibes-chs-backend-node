@@ -27,3 +27,5 @@ exports.updateByDocRunning = async (doc_running_no, data) =>
   await OrderRepository.updateByDocRunning(doc_running_no, data);
 
 exports.delete = async (id) => await OrderRepository.delete(id);
+
+exports.V_ORD_From_Econs = async () => await OrderRepository.V_ORD_From_Econs();

@@ -244,3 +244,11 @@ exports.delete = async (id) => {
   }
   return rt_transaction;
 };
+
+exports.V_ORD_From_Econs = async (doc_running, id) =>
+  await db.sequelize.query(
+    `SELECT * FROM V_ORD_From_Econs;`,
+    {
+      type: db.sequelize.QueryTypes.SELECT,
+    }
+  );

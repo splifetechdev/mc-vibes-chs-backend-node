@@ -40,3 +40,58 @@ exports.delete = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+exports.InsertdataFromEcons = async (req, res) => {
+  let checkdata_success=0;
+  let checkdata_fail=0;
+  try {
+     const result = await OrderService.V_ORD_From_Econs();
+        if(result.length > 0){
+            result.forEach(async(x,i)=>{
+              try {
+              await OrderService.create({
+                doc_module_name: x.module,
+          doc_running_no: x.REFMFG,
+          item_master_id: x.itemid,
+          order_qty: x.QTYORD,
+          rtg_id: x.rtgid,
+          line_of_mch: '1',
+          order_date: x.ORDDATE,
+          due_date: x.DUEDATE,
+          due_time:'01:00:00.0000000',
+          status: 'D',
+          company_id: 1,
+          qty_receive: x.QTYRCD,
+          qty_remain: x.remain,
+          qty_kg: 0,
+          user_create: 0,
+          user_update: 0,
+              });
+              checkdata_success++;
+            }catch (error) {
+              checkdata_fail++;
+              console.error(error);
+            }
+            if(i === result.length - 1) {
+              res.status(200).json({
+                total:result.length,
+                success:checkdata_success,
+                fail:checkdata_fail,
+                message: `Insert data from Econs completed. Success: ${checkdata_success}, Fail: ${checkdata_fail}`,
+              });
+
+            }
+          });
+        }else{
+           res.status(200).json({
+                total:result.length,
+                success:checkdata_success,
+                fail:checkdata_fail,
+                message: `Insert data from Econs completed. Success: ${checkdata_success}, Fail: ${checkdata_fail}`,
+              });
+        }
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+

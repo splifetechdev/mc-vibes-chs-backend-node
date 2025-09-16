@@ -431,3 +431,72 @@ exports.getItemhavestd_cost = async (req, res) =>
       return;
     }
   }
+
+   exports.InsertRoutingdataFromEcons = async (req, res) => {
+    let checkdata_success=0;
+    let checkdata_fail=0;
+    try {
+       const result = await tbl_routingService.V_Routing_From_Econs();
+          if(result.length > 0){
+              result.forEach(async(x,i)=>{
+                try {
+               await tbl_routingService.create({
+                        rtg_id: x.rtgid,
+                   company_id: 1,
+                   item_master_id: x.itemid,
+                   opn_id: x.OPN,
+                   opn_name: x.OPNDESC,
+                   work_center_id: x.wcid,
+                   no_of_machine: '1',
+                   machine_id: x.mchid,
+                   unit_id: 3,
+                   predecessor: 0,
+                   dependency: 'FS',
+                   setup_time: x.SUHR,
+                   setup_timehr_per: 'O',
+                   eoq: x.EOQ,
+                   pcs_hr: x.PCSHR,
+                   hr_pcs: x.HR_PCS,
+                   qty_per:1,
+                   qty_by: 1,
+                   scrap: 0,
+                   batch: 0,
+                   over_lap_time: 0,
+                   over_lap_unit: 0,
+                   std_cost: x.rtgid == '00'? 1 : 0,
+                   std_dl: x.stddl?x.stddl:0,
+                   std_foh: x.stdfoh?x.stdfoh:0,
+                   std_voh: x.stdvoh?x.stdvoh:0,
+                   std_setup_time_pc: x.stdsetup?x.stdsetup:0,
+                   operation_cost: (x.stddl?x.stddl:0)+(x.stdfoh?x.stdfoh:0)+(x.stdvoh?x.stdvoh:0)+(x.stdsetup?x.stdsetup:0),
+                   iot_um_conv: x.uom,
+                   user_create:1,
+                   user_update: 1,
+                       });
+                checkdata_success++;
+              }catch (error) {
+                checkdata_fail++;
+                console.error(error);
+              }
+              if(i === result.length - 1) {
+                res.status(200).json({
+                  total:result.length,
+                  success:checkdata_success,
+                  fail:checkdata_fail,
+                  message: `Insert data from Econs completed. Success: ${checkdata_success}, Fail: ${checkdata_fail}`,
+                });
+  
+              }
+            });
+          }else{
+             res.status(200).json({
+                  total:result.length,
+                  success:checkdata_success,
+                  fail:checkdata_fail,
+                  message: `Insert data from Econs completed. Success: ${checkdata_success}, Fail: ${checkdata_fail}`,
+                });
+          }
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  };

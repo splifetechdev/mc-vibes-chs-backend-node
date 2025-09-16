@@ -19,4 +19,6 @@ router.delete("/:id/:u_define_module_id", tbl_routingController.delete);
 router.get("/getItemhavestd_cost/:item_master_id/:company_id", tbl_routingController.getItemhavestd_cost);
 // router.get("/checkdata/:item_master_id/:rtg_id/:company_id/:opn_id", tbl_routingController.checkvalidaterouting);
 router.post("/import_routing", tbl_routingController.import_routing);
+router.post("/InsertRoutingdataFromEcons", tbl_routingController.InsertRoutingdataFromEcons);
+
 module.exports = router;

@@ -20,5 +20,6 @@ router.get("/getAllByID/:id/:u_define_id", OrderController.getAllByID);
 router.post("/", OrderController.create);
 router.put("/:id", OrderController.update);
 router.delete("/:id", OrderController.delete);
+router.post("/InsertdataFromEcons", OrderController.InsertdataFromEcons);
 
 module.exports = router;
