@@ -38,6 +38,7 @@ app.use(cors(corsOptions));
 // app.use(cors());
 app.use("/image", express.static("./images"));
 app.use("/companyimage", express.static("./companyimage"));
+app.use("/fileimportsystem", express.static("./fileimportsystem"));
 
 app.use(express.json());
 app.use("/account/register", register);
