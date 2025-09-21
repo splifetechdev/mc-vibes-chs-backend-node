@@ -184,17 +184,17 @@ exports.findWorkCenterAllforganttchart = async (id, data) =>
                     // [db.sequelize.fn('timediff',db.sequelize.col('opn_end_date_time'),db.sequelize.col('opn_start_date_time')),'duration'],
                     [
                       db.sequelize.fn(
-                        "date_format",
+                        "FORMAT",
                         db.sequelize.col("opn_start_date_time"),
-                        "%Y-%m-%d %H:%i:%s"
+                        "yyyy-MM-dd HH:mm:ss"
                       ),
                       "opn_start_date_time",
                     ],
                     [
                       db.sequelize.fn(
-                        "date_format",
+                        "FORMAT",
                         db.sequelize.col("opn_end_date_time"),
-                        "%Y-%m-%d %H:%i:%s"
+                        "yyyy-MM-dd HH:mm:ss"
                       ),
                       "opn_end_date_time",
                     ],
