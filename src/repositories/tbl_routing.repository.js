@@ -275,3 +275,11 @@ await db.sequelize.query(
     type: db.sequelize.QueryTypes.SELECT,
   }
 );
+
+exports.get_v_check_rtg_use = async (id) =>
+await db.sequelize.query(
+  `SELECT * FROM V_check_rtg_use where id=${id};`,
+  {
+    type: db.sequelize.QueryTypes.SELECT,
+  }
+);

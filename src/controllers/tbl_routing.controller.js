@@ -500,3 +500,12 @@ exports.getItemhavestd_cost = async (req, res) =>
       res.status(400).json({ message: error.message });
     }
   };
+
+  exports.get_v_check_rtg_use = async (req, res) => {
+    try {
+      res.status(201).json(await tbl_routingService.get_v_check_rtg_use(req.body.rtg_id));
+    } catch (error) {
+      res.json({ message: error.message });
+      return;
+    }
+  };

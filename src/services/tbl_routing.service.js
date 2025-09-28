@@ -79,3 +79,5 @@ exports.getrtg_id_item_id = async (id, item_master_id,rtg_id) =>
   await tbl_routingRepository.getItemhavestd_cost(item_master_id,company_id);
 
    exports.V_Routing_From_Econs = async () => await tbl_routingRepository.V_Routing_From_Econs();
+
+  exports.get_v_check_rtg_use = async (id) => await tbl_routingRepository.get_v_check_rtg_use(id);
