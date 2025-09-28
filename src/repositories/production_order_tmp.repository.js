@@ -52,6 +52,11 @@ exports.findPOTempByOPN = async (doc_running, rtg_id, item_master_id, opn_id) =>
     }
   );
 
+// `SELECT *,MAX(opn_start_date_time) FROM tbl_opn_tmp
+//    WHERE  tbl_opn_tmp.doc_running_no = :doc_running
+//    AND tbl_opn_tmp.rtg_id = :rtg_id
+//    AND tbl_opn_tmp.item_master_id = :item_master_id
+//    AND tbl_opn_tmp.opn_id = :opn_id`,
 exports.findPOTempByOPNMINStartDate = async (
   doc_running,
   rtg_id,
@@ -59,17 +64,24 @@ exports.findPOTempByOPNMINStartDate = async (
   opn_id
 ) =>
   await db.sequelize.query(
-    `SELECT *,MAX(opn_start_date_time) FROM tbl_opn_tmp
-     WHERE  tbl_opn_tmp.doc_running_no = :doc_running
-     AND tbl_opn_tmp.rtg_id = :rtg_id
-     AND tbl_opn_tmp.item_master_id = :item_master_id
-     AND tbl_opn_tmp.opn_id = :opn_id`,
+    `SELECT TOP 1 id, overlab_time_cal, opn_start_date_time
+        FROM tbl_opn_tmp
+        WHERE tbl_opn_tmp.doc_running_no = :doc_running
+        AND tbl_opn_tmp.rtg_id = :rtg_id
+        AND tbl_opn_tmp.item_master_id = :item_master_id
+        AND tbl_opn_tmp.opn_id = :opn_id
+        ORDER BY opn_start_date_time DESC;`,
     {
       replacements: { doc_running, rtg_id, item_master_id, opn_id },
       type: db.sequelize.QueryTypes.SELECT,
     }
   );
 
+// `SELECT *,MAX(opn_end_date_time) FROM tbl_opn_tmp
+//    WHERE  tbl_opn_tmp.doc_running_no = :doc_running
+//    AND tbl_opn_tmp.rtg_id = :rtg_id
+//    AND tbl_opn_tmp.item_master_id = :item_master_id
+//    AND tbl_opn_tmp.opn_id = :opn_id`,
 exports.findPOTempByOPNMINEndDate = async (
   doc_running,
   rtg_id,
@@ -77,11 +89,13 @@ exports.findPOTempByOPNMINEndDate = async (
   opn_id
 ) =>
   await db.sequelize.query(
-    `SELECT *,MAX(opn_end_date_time) FROM tbl_opn_tmp
-     WHERE  tbl_opn_tmp.doc_running_no = :doc_running
-     AND tbl_opn_tmp.rtg_id = :rtg_id
-     AND tbl_opn_tmp.item_master_id = :item_master_id
-     AND tbl_opn_tmp.opn_id = :opn_id`,
+    `SELECT TOP 1 id, overlab_time_cal, opn_end_date_time
+      FROM tbl_opn_tmp
+      WHERE tbl_opn_tmp.doc_running_no = :doc_running
+      AND tbl_opn_tmp.rtg_id = :rtg_id
+      AND tbl_opn_tmp.item_master_id = :item_master_id
+      AND tbl_opn_tmp.opn_id = :opn_id
+      ORDER BY opn_end_date_time DESC;`,
     {
       replacements: { doc_running, rtg_id, item_master_id, opn_id },
       type: db.sequelize.QueryTypes.SELECT,
