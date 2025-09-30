@@ -268,7 +268,7 @@ const getReceiveQty = async (timecardDetailId, companyId) => {
     },
   });
 
-  const convertedQty = qty / routing.iot_um_conv;
+  const convertedQty = qty * routing.iot_um_conv;
   return (Math.round(convertedQty * 100) / 100).toFixed(2);
 };
 
