@@ -1508,7 +1508,8 @@ exports.saveProductionOrderDraft = async (req, res) => {
           minute_cal = await calculateDateRangeMinuteUpToDown(
             shift_all,
             c_date_due_date,
-            c_date_end_time_cal
+            c_date_end_time_cal,
+            "saveProductionOrder"
           );
           console.log("PD minute_cal: ", minute_cal);
 
@@ -3294,7 +3295,8 @@ exports.updateProductionOrderDraft = async (req, res) => {
           minute_cal = await calculateDateRangeMinuteUpToDown(
             shift_all,
             c_date_due_date,
-            c_date_end_time_cal
+            c_date_end_time_cal,
+            "updateProductionOrder"
           );
           console.log("PD minute_cal: ", minute_cal);
 
@@ -5066,8 +5068,8 @@ exports.adjustProductionOrderByDueDateDraft = async (req, res) => {
       let OriginalDate31 = new Date(due_date_time);
       c_date_due_date = new Date(OriginalDate31.getTime() + 420 * 60 * 1000);
 
-      console.log("PD c_date_end_time_cal: ", c_date_end_time_cal);
-      console.log("PD c_date_due_date: ", c_date_due_date);
+      console.log("PDAJ c_date_end_time_cal: ", c_date_end_time_cal);
+      console.log("PDAJ c_date_due_date: ", c_date_due_date);
 
       let status_cal = "equal";
       let minute_cal = 0;
@@ -5095,7 +5097,8 @@ exports.adjustProductionOrderByDueDateDraft = async (req, res) => {
           minute_cal = await calculateDateRangeMinuteUpToDown(
             shift_all,
             c_date_due_date,
-            c_date_end_time_cal
+            c_date_end_time_cal,
+            "adjustProductionOrderByDueDate"
           );
           console.log("PD minute_cal: ", minute_cal);
 
@@ -9306,10 +9309,13 @@ async function calculateTempOpnOrdDate(
       // ------- check holiday -------
 
       console.log(
-        "loop main_date_cal main_date_cal Start Loop: ",
+        "loop main_date_cal main_date_cal Start Loop calculateReDateDownToUp: ",
         main_date_cal
       );
-      console.log("loop main_date_cal newDate Start Loop: ", newDate);
+      console.log(
+        "loop main_date_cal newDate Start Loop calculateReDateDownToUp: ",
+        newDate
+      );
 
       shifts.forEach((shift) => {
         shift.date_cal = newDate.toISOString().replace("T00:00:00.000Z", "");
@@ -11005,7 +11011,8 @@ async function reCalculateAdjustPD(doc_running) {
 async function calculateDateRangeMinuteUpToDown(
   shift_all,
   opn_start_date_time,
-  opn_end_date_time
+  opn_end_date_time,
+  function_name
 ) {
   let minutesWorked = 0;
 
@@ -11018,6 +11025,14 @@ async function calculateDateRangeMinuteUpToDown(
   let stamp_date = "2024-02-29 08:00:00";
 
   // console.log("calculateDateRangeMinuteUpToDown set_up_time: 1111111");
+  // console.log(
+  //   "calculateDateRangeMinuteUpToDown shift_all: ",
+  //   JSON.stringify(shift_all)
+  // );
+  console.log(
+    "calculateDateRangeMinuteUpToDown function_name: ",
+    function_name
+  );
   // console.log(
   //   "calculateDateRangeMinuteUpToDown opn_start_date_time: ",
   //   opn_start_date_time
@@ -11206,76 +11221,36 @@ async function calculateDateRangeMinuteUpToDown(
   // ---------------  start Loop 2 ----------------
   let c_over = 0;
   let date_start_compare2 = new Date();
+  let should_stop = false; // เพิ่มตัวแปรนี้
+
   //ถ้าวันแรก ลบเวลาเสร็จแล้ว ให้หยุด ถ้าไม่ให้วน loop ต่อ
   if (first_day_stop == false) {
-    // console.log("calculateDateRangeMinuteUpToDown minutesWorked: ", "first_day_stop == false");
     do {
       c_over++;
       const newDate = new Date(main_date_cal);
       newDate.setDate(newDate.getDate() + 1);
       main_date_cal = newDate.toISOString().replace("T00:00:00.000Z", "");
 
-      // console.log(
-      //   "calculateDateRangeMinuteUpToDown loop main_date_cal main_date_cal Start Loop: ",
-      //   main_date_cal
-      // );
-      // console.log(
-      //   "calculateDateRangeMinuteUpToDown loop main_date_cal newDate Start Loop: ",
-      //   newDate
-      // );
-
       shifts.forEach((shift) => {
         shift.date_cal = newDate.toISOString().replace("T00:00:00.000Z", "");
       });
-      // console.log("calculateDateRangeMinuteUpToDown shifts: ", JSON.stringify(shifts));
-      // console.log(
-      //   "calculateDateRangeMinuteUpToDown minutesWorked: ",
-      //   "first_day_stop == false"
-      // );
-      // console.log(
-      //   "calculateDateRangeMinuteUpToDown main_date_cal: ",
-      //   main_date_cal
-      // );
 
       for (let i = 0; i < shifts.length; i++) {
         const shift = shifts[i];
         let tmp_mindiff = 0;
-        // console.log("calculateDateRangeMinuteUpToDown first_day_stop shift: ", shift);
-        // console.log("minutesWorked: ", minutesWorked);
         let shiftStartTime = `${shift.date_cal} ${shift.start_time}`;
         let shiftEndTime = `${shift.date_cal} ${shift.end_time}`;
-
-        // console.log("calculateDateRangeMinuteUpToDown shiftIndex_loop2: ", shift.index);
-        // console.log(
-        //   "calculateDateRangeMinuteUpToDown shiftStartTime_loop2: ",
-        //   shiftStartTime
-        // );
-        // console.log(
-        //   "calculateDateRangeMinuteUpToDown strEndOfWork_loop2: ",
-        //   shiftEndTime
-        // );
 
         let tmp_date_start_compare2 = new Date(shiftEndTime);
         date_start_compare2 = new Date(
           tmp_date_start_compare2.getTime() + 420 * 60 * 1000
-        ); // แปลงเป็นมิลลิวินาทีแล้วลบ
-
-        // console.log(
-        //   "calculateDateRangeMinuteUpToDown not_first_day due_date_compare: ",
-        //   due_date_compare
-        // );
-        // console.log(
-        //   "calculateDateRangeMinuteUpToDown not_first_day date_start_compare2: ",
-        //   date_start_compare2
-        // );
+        );
 
         if (due_date_compare < date_start_compare2) {
-          // console.log("due_date_compare < date_start_compare2 55");
-
           let tmp_date_start_compare3 = new Date(shiftStartTime);
           let date_start_compare3 = new Date(
             tmp_date_start_compare3.getTime() + 420 * 60 * 1000
-          ); // แปลงเป็นมิลลิวินาทีแล้วลบ
+          );
 
           let DS = new Date(date_start_compare3)
             .toISOString()
@@ -11288,10 +11263,8 @@ async function calculateDateRangeMinuteUpToDown(
           let minDiff = calculateTimeDifference(DS, DE);
           minDiff = Math.abs(minDiff);
           console.log("calculateDateRangeMinuteUpToDown minDiff55: ", minDiff);
-          // console.log("calculateDateRangeMinuteUpToDown DS55: ", DS);
-          // console.log("calculateDateRangeMinuteUpToDown DE55: ", DE);
           minutesWorked += minDiff;
-          // console.log("calculateDateRangeMinuteUpToDown minutesWorked33: ", minutesWorked);
+          should_stop = true; // ตั้งค่า flag
           break;
         }
 
@@ -11303,16 +11276,12 @@ async function calculateDateRangeMinuteUpToDown(
           minDiff
         );
         minutesWorked += minDiff;
-        // console.log("calculateDateRangeMinuteUpToDown minutesWorked22_loop2: ", minutesWorked);
       }
-      // } while (due_date_compare > date_start_compare2);
-    } while (c_over < 10);
-    // console.log("calculateDateRangeMinuteUpToDown End While Loop");
+
+      if (should_stop) break; // เพิ่มการตรวจสอบที่นี่
+    } while (due_date_compare > date_start_compare2 && c_over < 100); // เปลี่ยนเงื่อนไขและเพิ่ม safety limit
   }
-  // console.log(
-  //   "calculateDateRangeMinuteUpToDown End While Loop minutesWorked:",
-  //   minutesWorked
-  // );
+
   return minutesWorked;
 }
 
@@ -11827,10 +11796,13 @@ async function calculateReDateDownToUp(
       // ------- check holiday -------
 
       console.log(
-        "loop main_date_cal main_date_cal Start Loop: ",
+        "loop main_date_cal main_date_cal Start Loop calculateReDateDownToUp: ",
         main_date_cal
       );
-      console.log("loop main_date_cal newDate Start Loop: ", newDate);
+      console.log(
+        "loop main_date_cal newDate Start Loop calculateReDateDownToUp: ",
+        newDate
+      );
 
       shifts.forEach((shift) => {
         shift.date_cal = newDate.toISOString().replace("T00:00:00.000Z", "");
