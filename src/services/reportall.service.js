@@ -18,3 +18,5 @@ exports.cloth_registration_mch = async (sql) => await reportallRepository.cloth_
 exports.cloth_registration_sum = async (sql) => await reportallRepository.cloth_registration_sum(sql);
 
 exports.cloth_registration_detail = async (sql) => await reportallRepository.cloth_registration_detail(sql);
+
+exports.report_lost_time = async (sql) => await reportallRepository.report_lost_time(sql);
