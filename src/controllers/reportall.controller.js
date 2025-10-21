@@ -43,7 +43,6 @@ if(req.body.status && req.body.status != ""){
 }
 
 exports.report_lost_time = async (req, res) =>{
-  console.log(req.body)
   let sql=`SELECT * from V_rpt_downtime where CONVERT(date, tcdate, 103) 
       BETWEEN CONVERT(date, '${req.body.datefrom}', 103)
           and CONVERT(date, '${req.body.dateto}', 103)
@@ -60,14 +59,12 @@ if(req.body.mch_id){
 if(req.body.downtime_id){
   sql+=` and downtime_id = '${req.body.downtime_id}'`
 }
-  sql+=` order by tcdate ASC`
-   console.log(sql)
+  sql+=` order by tcdate ASC`;
   res.json(await reportallService.report_lost_time(sql));
 }
 
 
 exports.report_waste = async (req, res) =>{
-  console.log(req.body)
   let sql=`SELECT * from V_rpt_defect where CONVERT(date, tcdate, 103) 
       BETWEEN CONVERT(date, '${req.body.datefrom}', 103)
           and CONVERT(date, '${req.body.dateto}', 103)
@@ -88,6 +85,5 @@ if(req.body.item_id){
   sql+=` and item_id = '${req.body.item_id}'`
 }
   sql+=` order by tcdate ASC`
-   console.log(sql)
   res.json(await reportallService.report_waste(sql));
 }
