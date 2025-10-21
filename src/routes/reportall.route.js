@@ -11,4 +11,6 @@ router.post("/cloth_registration_sum", reportallController.cloth_registration_su
 router.post("/cloth_registration_detail", reportallController.cloth_registration_detail);
 router.post("/report_lost_time", reportallController.report_lost_time);
 
+router.post("/report_waste", reportallController.report_waste);
+
 module.exports = router;
