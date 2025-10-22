@@ -48,16 +48,16 @@ exports.report_lost_time = async (req, res) =>{
           and CONVERT(date, '${req.body.dateto}', 103)
   `;
 if(req.body.wc_group){
-  sql+=` and wc_group = '${req.body.wc_group}'`
+  sql+=` and (wc_group IS NULL OR wc_group = '${req.body.wc_group}')`;
 }
 if(req.body.work_center_id){
-  sql+=` and wc_id = '${req.body.work_center_id}'`
+  sql+=` and (wc_id IS NULL OR wc_id = '${req.body.work_center_id}')`;
 }
 if(req.body.mch_id){
-  sql+=` and mch_id = '${req.body.mch_id}'`
+  sql+=` and mch_id = '${req.body.mch_id}'`;
 }
 if(req.body.downtime_id){
-  sql+=` and downtime_id = '${req.body.downtime_id}'`
+  sql+=` and downtime_id = '${req.body.downtime_id}'`;
 }
   sql+=` order by tcdate ASC`;
   res.json(await reportallService.report_lost_time(sql));
@@ -70,22 +70,22 @@ exports.report_waste = async (req, res) =>{
           and CONVERT(date, '${req.body.dateto}', 103)
   `;
 if(req.body.wc_group){
-  sql+=` and wc_group = '${req.body.wc_group}'`
+  sql+=` and (wc_group IS NULL OR wc_group = '${req.body.wc_group}')`;
 }
 if(req.body.work_center_id){
-  sql+=` and wc_id = '${req.body.work_center_id}'`
+  sql+=` and (wc_id IS NULL OR wc_id = '${req.body.work_center_id}')`;
 }
 if(req.body.mch_id){
-  sql+=` and mch_id = '${req.body.mch_id}'`
+  sql+=` and mch_id = '${req.body.mch_id}'`;
 }
 if(req.body.worker_id){
-  sql+=` and worker_id = '${req.body.worker_id}'`
+  sql+=` and worker_id = '${req.body.worker_id}'`;
 }
 if(req.body.work_order){
-  sql+=` and work_order = '${req.body.work_order}'`
+  sql+=` and work_order = '${req.body.work_order}'`;
 }
 if(req.body.item_id){
-  sql+=` and item_id = '${req.body.item_id}'`
+  sql+=` and item_id = '${req.body.item_id}'`;
 }
   sql+=` order by tcdate ASC`
   res.json(await reportallService.report_waste(sql));
