@@ -81,6 +81,9 @@ if(req.body.mch_id){
 if(req.body.worker_id){
   sql+=` and worker_id = '${req.body.worker_id}'`
 }
+if(req.body.work_order){
+  sql+=` and work_order = '${req.body.work_order}'`
+}
 if(req.body.item_id){
   sql+=` and item_id = '${req.body.item_id}'`
 }
