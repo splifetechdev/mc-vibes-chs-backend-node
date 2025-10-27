@@ -29,7 +29,7 @@ const corsOptions = {
     "http://localhost:8081",
     "https://m-vibe.com",
     "https://www.m-vibe.com",
-    "https://nyc.m-vibe.com",
+    "https://chs.m-vibe.com",
   ],
   optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
 };
