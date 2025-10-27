@@ -21,5 +21,6 @@ exports.cloth_registration_detail = async (sql) => await reportallRepository.clo
 
 exports.report_lost_time = async (sql) => await reportallRepository.report_lost_time(sql);
 
+exports.report_performance = async (sql) => await reportallRepository.report_performance(sql);
 
 exports.report_waste = async (sql) => await reportallRepository.report_waste(sql);
