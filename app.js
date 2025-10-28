@@ -56,5 +56,8 @@ app.listen(port, async () => {
     await jobScheduleService.scheduleJob_Costing_Labor_per_opn();
     await jobScheduleService.scheduleJob_Costing_FOH_cost_detail();
     await jobScheduleService.scheduleJob_Costing_Labor_cost_detail();
+    await jobScheduleService.InsertItemMasterDataFromEcons();
+    await jobScheduleService.InsertRoutingDataFromEcons();
+    await jobScheduleService.InsertORDDataFromEcons();
   }
 });
