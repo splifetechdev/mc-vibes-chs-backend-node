@@ -6,6 +6,7 @@ router.post("/addUserAccount", tbl_workerController.addUserAccount);
 router.get("/get", tbl_workerController.getAll);
 
 router.get("/getByCompany", tbl_workerController.getByCompany);
+router.get("/getByStatus/", tbl_workerController.getByStatus);
 
 router.put("/:id", tbl_workerController.update);
 router.delete("/:id", tbl_workerController.delete);

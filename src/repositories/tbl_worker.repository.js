@@ -23,6 +23,14 @@ exports.findByCompany = async (company_id) =>
     },
   });
 
+exports.findByStatus = async (company_id) =>
+  await db.tbl_worker.findAll({
+    where: {
+      company_id: company_id,
+      emp_status : 'A',
+    },
+  });
+
 exports.findAll = async () =>
   await db.sequelize.query(
     `SELECT A.id , A.emp_id , A.user_role ,A.authorize_id , A.approver_level1 , A.approver_level2 , A.approver_level3 , 

@@ -39,6 +39,9 @@ exports.addUserAccount = async (req, res) => {
 exports.getByCompany = async (req, res) =>
   res.json(await tbl_workerService.findByCompany(req.requester_company_id));
 
+exports.getByStatus = async (req, res) =>
+  res.json(await tbl_workerService.findByStatus(req.requester_company_id));
+
 exports.getAll = async (req, res) =>
   res.json(await tbl_workerService.findAll());
 

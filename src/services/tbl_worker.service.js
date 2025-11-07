@@ -10,6 +10,9 @@ exports.findAll = async () => await tbl_workerRepository.findAll();
 exports.findByCompany = async (company_id) =>
   await tbl_workerRepository.findByCompany(company_id);
 
+exports.findByStatus = async (company_id) => 
+  await tbl_workerRepository.findByStatus(company_id);
+
 exports.delete = async (id) => await tbl_workerRepository.delete(id);
 
 exports.findId = async (id) => await tbl_workerRepository.FindUserById(id);
