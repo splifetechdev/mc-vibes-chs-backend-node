@@ -476,8 +476,8 @@ exports.getPerformanceDashboard = async (req, res) => {
         ...result,
         opn_desc: `${result.opn_id} ${result.opn_desc || ""}`,
         hours: Number(result.hours).toFixed(2),
-        standard_pcs: Number(result.standard_pcs),
-        actual_pcs: Number(result.actual_pcs),
+        standard_pcs: Number(result.standard_pcs).toFixed(2),
+        actual_pcs: Number(result.actual_pcs).toFixed(2),
         performance:
           Math.round((result.actual_pcs / result.standard_pcs) * 100 * 100) /
           100,

@@ -92,7 +92,7 @@ exports.getPerformance = async ({
   }
 
   if (opn_ord_id) {
-    whereCause += ` AND tbl_time_card_detail.opn_ord_id = ${opn_ord_id}`;
+    whereCause += ` AND tbl_opn_ord.doc_running_no = '${opn_ord_id}'`;
   }
   const sql = `
   SELECT
