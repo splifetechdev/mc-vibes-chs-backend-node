@@ -2,6 +2,7 @@ const tbl_time_card_service = require("../services/tbl_time_card.service");
 const doc_running_service = require("../services/doc_running.service");
 const db = require("../db/models");
 const dayjs = require("dayjs");
+const { Op } = require("sequelize");
 const {
   getPerformanceValue,
   getAvailabilityValue,
@@ -22,7 +23,7 @@ exports.get_one = async (req, res) => {
   try {
     const timecard = await tbl_time_card_service.find_by_id(
       req.params.tc_id,
-      req.params.u_define_module_id
+      req.params.u_define_module_id,
     );
     res.json(timecard);
   } catch (error) {
@@ -44,6 +45,7 @@ exports.list_own = async (req, res) => {
           model: db.tbl_time_card_detail,
           where: {
             downtime_id: null,
+            end_at: null,
           },
           require: true,
           include: [
@@ -123,7 +125,7 @@ exports.end_time_card_detail = async (req, res) => {
       } else {
         difference = totalMinutes2 - totalMinutes1;
       }
-      diffHour = difference / 60;
+      const diffHour = difference / 60;
       await db.tbl_time_card_detail.update(
         {
           ...updateData,
@@ -132,7 +134,7 @@ exports.end_time_card_detail = async (req, res) => {
           where: {
             id: log_id,
           },
-        }
+        },
       );
       updateData.qty = await getReceiveQty(log_id, req.requester_company_id);
       updateData.work_hours = diffHour;
@@ -147,7 +149,7 @@ exports.end_time_card_detail = async (req, res) => {
         where: {
           id: log_id,
         },
-      }
+      },
     );
     res.json({ message: "Time card detail ended" });
   } catch (error) {
@@ -162,7 +164,7 @@ exports.create = async (req, res) => {
     const docRunning = await doc_running_service.findOneById(doc_group_id);
     console.log(docRunning);
     const runningNumber = await doc_running_service.docGenerate(
-      docRunning.module
+      docRunning.module,
     );
     const result = await tbl_time_card_service.create({
       ...req.body,
@@ -186,7 +188,7 @@ exports.createforiotmapping = async (req, res) => {
 
     for (let i = 0; i < mch_id.length; i++) {
       let runningNumber = await doc_running_service.docGenerate(
-        docRunning.module
+        docRunning.module,
       );
       const result = await tbl_time_card_service.create({
         ...req.body,
@@ -256,7 +258,7 @@ const getReceiveQty = async (timecardDetailId, companyId) => {
     WHERE MachineID = ${plc.plc_id}
       AND DataDateTime 
       BETWEEN '${startAtStr}' 
-        AND '${endAtStr}';`
+        AND '${endAtStr}';`,
   );
   const qty = iotData.reduce((acc, cur) => acc + cur.Qty, 0);
   const routing = await db.tbl_routing.findOne({
@@ -268,7 +270,11 @@ const getReceiveQty = async (timecardDetailId, companyId) => {
     },
   });
 
-  const convertedQty = qty * routing.iot_um_conv;
+  if (!routing) {
+    return 0;
+  }
+
+  const convertedQty = qty / routing.iot_um_conv;
   return (Math.round(convertedQty * 100) / 100).toFixed(2);
 };
 
@@ -303,7 +309,7 @@ exports.post_job = async (req, res) => {
               {
                 end_at: new Date(),
               },
-              { where: { id: detail.id } }
+              { where: { id: detail.id } },
             );
             return;
           }
@@ -329,11 +335,11 @@ exports.post_job = async (req, res) => {
               time_start: start_time,
               time_end: end_time,
             },
-            { where: { id: detail.id } }
+            { where: { id: detail.id } },
           );
           const detailQty = await getReceiveQty(
             detail.id,
-            req.requester_company_id
+            req.requester_company_id,
           );
           await db.tbl_time_card_detail.update(
             {
@@ -341,9 +347,9 @@ exports.post_job = async (req, res) => {
               work_hours: diffHour,
               end_at: new Date(),
             },
-            { where: { id: detail.id } }
+            { where: { id: detail.id } },
           );
-        })
+        }),
     );
     const result = await tbl_time_card_service.post_time_card(timeCard);
     res.json(result);
@@ -418,11 +424,11 @@ exports.upsert_log = async (req, res) => {
     if (tbl_time_card_defects || defect_delete_id_list) {
       await Promise.all(
         tbl_time_card_defects.map(async (defect) =>
-          tbl_time_card_service.upsert_defect(logId, defect, req.requester_id)
-        )
+          tbl_time_card_service.upsert_defect(logId, defect, req.requester_id),
+        ),
       );
       const removeResult = await tbl_time_card_service.bulk_remove_defect(
-        defect_delete_id_list
+        defect_delete_id_list,
       );
     }
 
@@ -442,7 +448,7 @@ exports.bulk_upsert_log_defect = async (req, res) => {
         } else {
           tbl_time_card_service.save_defect(defect);
         }
-      })
+      }),
     );
   } catch (error) {}
 };
@@ -457,25 +463,63 @@ exports.remove_defect = async (req, res) => {
   }
 };
 
+// exports.list = async (req, res) => {
+//   try {
+//     const t0 = performance.now();
+//     const { company_id } = req.params;
+//     const result = await tbl_time_card_service.list(company_id);
+//     const formattedData = result.map((timecard) => ({
+//       ...timecard.toJSON(),
+//       mch_ids:
+//         timecard?.tbl_time_card_details.map((detail) => detail.mch_id) || [],
+//       wo_running_nos:
+//         timecard?.tbl_time_card_details.map((detail) => detail.wo_running_no) ||
+//         [],
+//       tbl_time_card_details: undefined,
+//     }));
+//     console.log(`query: ${(performance.now() - t0).toFixed(1)} ms`);
+//     res.json(formattedData);
+//   } catch (error) {
+//     res.status(500).send({ error: error.message });
+//   }
+// };
+
 exports.list = async (req, res) => {
   try {
     const { company_id } = req.params;
-    const result = await tbl_time_card_service.list(company_id);
-    const formattedData = result.map((timecard) => ({
-      ...timecard.toJSON(),
-      mch_ids:
-        timecard?.tbl_time_card_details.map((detail) => detail.mch_id) || [],
-      wo_running_nos:
-        timecard?.tbl_time_card_details.map((detail) => detail.wo_running_no) ||
-        [],
-      tbl_time_card_details: undefined,
-    }));
-    res.json(formattedData);
+
+    // const t0 = performance.now();
+    const result = await tbl_time_card_service.find_all_timecard_list(
+      company_id,
+      req.query,
+    );
+    // console.log(`query: ${(performance.now() - t0).toFixed(1)} ms`);
+
+    const t1 = performance.now();
+    const list = result.map((timecard) => {
+      const data = timecard.toJSON();
+      return {
+        ...data,
+        documentGroup: data.doc_running?.module,
+        documentNo: data.doc_running_no,
+        documentDate: dayjs(data.doc_date).format("DD/MM/YYYY"),
+        createdAt: dayjs(data.created_at).format("DD/MM/YYYY"),
+        status: data.status?.toUpperCase(),
+        isPosted: data.status?.toUpperCase() === "POST",
+        mch_ids: data.mch_ids ?? [], // มาจาก aggregate แล้ว
+        wo_running_nos: data.wo_running_nos ?? [],
+      };
+    });
+
+    const docNoList = list.map((d) => d.documentNo);
+    const opnOrdList = [...new Set(result.map((t) => t.opn_ord_id))];
+
+    res.json({ list, docNoList, opnOrdList });
   } catch (error) {
+    console.error(error);
     res.status(500).send({ error: error.message });
   }
 };
-
 exports.get_time_card_log = async (req, res) => {
   try {
     const { tc_id } = req.params;
@@ -488,24 +532,32 @@ exports.get_time_card_log = async (req, res) => {
 
 exports.get_time_card_detail = async (req, res) => {
   try {
+    // รับ activetab จาก query (front ส่งมา)
+    const activetab = parseInt(req.query.activetab, 10);
+    const posted = activetab === 3;
+    const targetStatus = posted ? "post" : "save";
+    const checkIsEnd = targetStatus === "save";
+
+    const formatDate = "YYYY-MM-DD"; // ปรับให้ตรงกับที่ front ใช้
+
     const timecardDetails = await db.tbl_time_card_detail.findAll({
       where: {
         created_by: req.requester_id,
+        // ย้าย filter end_at มาทำที่ DB
+        end_at: checkIsEnd ? null : { [Op.ne]: null },
       },
       include: [
         {
           model: db.tbl_time_card,
           where: {
             company_id: req.requester_company_id,
+            time_card_type: "worker", // ย้าย filter มาที่นี่
+            // status: targetStatus,  // เปิดถ้าต้องการ filter status ด้วย
           },
-          require: true,
+          required: true, // ⚠️ แก้จาก require -> required (เดิมพิมพ์ผิด เลยไม่ได้ inner join จริง)
         },
-        {
-          model: db.tbl_opn_ord,
-        },
-        {
-          model: db.tbl_worker,
-        },
+        { model: db.tbl_opn_ord },
+        { model: db.tbl_worker },
         {
           model: db.tbl_mch,
           include: {
@@ -518,7 +570,50 @@ exports.get_time_card_detail = async (req, res) => {
         { model: db.tbl_time_card_detail_worker, include: [db.tbl_worker] },
       ],
     });
-    res.json(timecardDetails);
+
+    // map เป็น shape ที่ front ต้องการ
+    const jobs = timecardDetails.map((row) => {
+      const data = row.toJSON(); // แปลง instance เป็น plain object
+
+      let startAt = null;
+      let endAt = null;
+
+      if (data.tbl_time_card?.doc_date) {
+        const startDate = dayjs(data.time_card_date).format("YYYY-MM-DD");
+        let s = dayjs(`${startDate}`);
+        let e = dayjs(`${startDate}`);
+        if (e.isBefore(s)) e = e.add(1, "day");
+
+        startAt = s.format(formatDate);
+        endAt = e.format(formatDate);
+      }
+
+      return {
+        id: data.id,
+        opn_ord_id: data.opn_ord_id || "",
+        mch_id: data.mch_id || data.machine_id,
+        wo_running_no: data.wo_running_no,
+        opn_desc: `${data.opn_desc}`,
+        batch: data.tbl_opn_ord?.batch_count,
+        item_id: data.item_id,
+        item_id_name: data.item_master?.item_id || data.item_id,
+        item_name: data.item_master?.item_name || data.item_master_id,
+        start_at: startAt,
+        start_time: data.time_start,
+        end_at: endAt,
+        end_time: data.time_end,
+        wc_id: data.tbl_mch?.work_center_id || data.wc_id,
+        wc_group_id: data.tbl_mch?.tbl_work_center?.tbl_work_center_group,
+        worker_id_list: (data.tbl_time_card_detail_workers || []).map(
+          (w) => w.worker_id,
+        ),
+        worker_id: data.worker_id,
+        defects: data.tbl_time_card_defects,
+        qty: data.qty,
+      };
+    });
+
+    res.json(jobs);
   } catch (error) {
     console.error(error);
     res.status(500).send({ error: error.message });
@@ -574,9 +669,8 @@ exports.get_detail_receive_qty = async (req, res) => {
 exports.listWorkOrderOptions = async (req, res) => {
   try {
     const { requester_company_id } = req;
-    const result = await tbl_time_card_service.list_work_order_option(
-      requester_company_id
-    );
+    const result =
+      await tbl_time_card_service.list_work_order_option(requester_company_id);
     res.status(200).send(result.map(({ doc_running_no }) => doc_running_no));
   } catch (error) {
     res.status(500).send({ error: error.message });
@@ -592,7 +686,7 @@ exports.listOperationOrdOptions = async (req, res) => {
         id: opn_ord.id,
         label: `OPN:${opn_ord.id} ${opn_ord.opn_name} WO:${opn_ord.doc_running_no}-Batch${opn_ord.batch_count}`,
         opn_desc: opn_ord.opn_name,
-      }))
+      })),
     );
   } catch (error) {
     res.status(500).send({ error: error.message });
@@ -685,7 +779,7 @@ const getReportByDateAndShiftz = async (
   shift_id,
   requester_id,
   isLeader,
-  requester_company_id
+  requester_company_id,
 ) => {
   const startAt = date
     ? dayjs(date).startOf("day").toDate()
@@ -778,7 +872,7 @@ const getReportByDateAndShiftz = async (
           `${dayjs.tz(date, "Asia/Bangkok").format("YYYY-MM-DD")} ${dayjs
             .tz(shift.start_time, "utc")
             .format("HH:mm:ss")}`,
-          "Asia/Bangkok"
+          "Asia/Bangkok",
         );
         filteredTimecardDetailByShift = timecardDetailByOpn.filter((t) => {
           if (!t.tbl_time_card.tbl_shift) {
@@ -788,7 +882,7 @@ const getReportByDateAndShiftz = async (
             `${dayjs.tz(date, "Asia/Bangkok").format("YYYY-MM-DD")} ${dayjs
               .tz(t.tbl_time_card.tbl_shift.start_time, "utc")
               .format("HH:mm:ss:SSS")}`,
-            "Asia/Bangkok"
+            "Asia/Bangkok",
           );
           return tcDateTime.isSameOrBefore(endTimeForFilter);
         });
@@ -798,7 +892,7 @@ const getReportByDateAndShiftz = async (
         .filter(
           (t) =>
             t.tbl_time_card.status === "post" &&
-            t.tbl_time_card.time_card_type === "worker"
+            t.tbl_time_card.time_card_type === "worker",
         )
         .reduce((acc, cur) => acc + cur.qty, 0);
       timecardDetail.dataValues.wo_running_no =
@@ -814,7 +908,7 @@ const getReportByDateAndShiftz = async (
       timecardDetail.dataValues.defect_count =
         timecardDetail.tbl_time_card_defects.reduce(
           (acc, defect) => (acc += defect.qty),
-          0
+          0,
         );
       timecardDetail.dataValues.downtime = isDownTime ? work_hours : 0;
       timecardDetail.dataValues.isDownTime = isDownTime;
@@ -823,7 +917,7 @@ const getReportByDateAndShiftz = async (
       // timecardDetail.dataValues.qty = parseFloat(qty);
       timecardDetail.dataValues.acc_qty = accumulatedQty.toFixed(2);
       return timecardDetail;
-    })
+    }),
   );
 
   const groupedTimecardByMachineOPN = formattedTimecardDetail.reduce(
@@ -831,7 +925,7 @@ const getReportByDateAndShiftz = async (
       if (cur.dataValues.isDownTime) {
         const foundDownTime = acc.find(
           (mchOpn) =>
-            mchOpn.dataValues.isDownTime && mchOpn.mch_id === cur.mch_id
+            mchOpn.dataValues.isDownTime && mchOpn.mch_id === cur.mch_id,
         );
         if (foundDownTime) {
           foundDownTime.dataValues.downtime += cur.work_hours;
@@ -845,7 +939,7 @@ const getReportByDateAndShiftz = async (
         (mchOpn) =>
           mchOpn.mch_id === cur.mch_id &&
           mchOpn.opn_ord_id === cur.opn_ord_id &&
-          mchOpn.tbl_opn_ord.batch_count === cur.tbl_opn_ord.batch_count
+          mchOpn.tbl_opn_ord.batch_count === cur.tbl_opn_ord.batch_count,
       );
       if (foundMachineOpn) {
         if (cur.qty > foundMachineOpn.qty) {
@@ -860,13 +954,13 @@ const getReportByDateAndShiftz = async (
         return acc;
       }
     },
-    []
+    [],
   );
 
   const timecardByMachines = groupedTimecardByMachineOPN.reduce((acc, cur) => {
     const { tbl_mch } = cur;
     const foundMachine = acc.find(
-      (timecardByMachine) => timecardByMachine.machine.id === tbl_mch.id
+      (timecardByMachine) => timecardByMachine.machine.id === tbl_mch.id,
     );
     if (foundMachine) {
       foundMachine.total_work_hours += cur.isDownTime ? 0 : cur.work_hours;
@@ -901,21 +995,21 @@ const getReportByDateAndShiftz = async (
   const timecardByMachinesWithSummary = timecardByMachines.map((machine) => {
     machine.performance = getPerformanceValue(
       machine.total_qty,
-      machine.total_standard_qty
+      machine.total_standard_qty,
     );
     machine.availability = getAvailabilityValue(
       machine.total_work_hours,
-      machine.total_plan_hours
+      machine.total_plan_hours,
     );
     machine.quality = getQualityValue(
       machine.total_qty,
-      machine.total_qty + machine.total_defects
+      machine.total_qty + machine.total_defects,
     );
 
     machine.oee = getOEEValue(
       machine.performance,
       machine.availability,
-      machine.quality
+      machine.quality,
     );
     return machine;
   });
@@ -924,7 +1018,7 @@ const getReportByDateAndShiftz = async (
     (acc, cur) => {
       const { workCenter } = cur;
       const foundWorkCenter = acc.find(
-        (wc) => wc.workCenter.wc_id === workCenter.wc_id
+        (wc) => wc.workCenter.wc_id === workCenter.wc_id,
       );
 
       if (foundWorkCenter) {
@@ -951,7 +1045,7 @@ const getReportByDateAndShiftz = async (
       }
       return acc;
     },
-    []
+    [],
   );
 
   const shiftSummary = {
@@ -974,39 +1068,39 @@ const getReportByDateAndShiftz = async (
       shiftSummary.total_standard_qty += workCenter.total_standard_qty;
       workCenter.performance = getPerformanceValue(
         workCenter.total_qty,
-        workCenter.total_standard_qty
+        workCenter.total_standard_qty,
       );
       workCenter.availability = getAvailabilityValue(
         workCenter.total_work_hours,
-        workCenter.total_plan_hours
+        workCenter.total_plan_hours,
       );
       workCenter.quality = getQualityValue(
         workCenter.total_qty,
-        workCenter.total_qty + workCenter.total_defects
+        workCenter.total_qty + workCenter.total_defects,
       );
       workCenter.oee = getOEEValue(
         workCenter.performance,
         workCenter.availability,
-        workCenter.quality
+        workCenter.quality,
       );
       return workCenter;
     });
   shiftSummary.performance = getPerformanceValue(
     shiftSummary.total_qty,
-    shiftSummary.total_standard_qty
+    shiftSummary.total_standard_qty,
   );
   shiftSummary.availability = getAvailabilityValue(
     shiftSummary.total_work_hours,
-    shiftSummary.total_plan_hours
+    shiftSummary.total_plan_hours,
   );
   shiftSummary.quality = getQualityValue(
     shiftSummary.total_qty,
-    shiftSummary.total_qty + shiftSummary.total_defects
+    shiftSummary.total_qty + shiftSummary.total_defects,
   );
   shiftSummary.oee = getOEEValue(
     shiftSummary.performance,
     shiftSummary.availability,
-    shiftSummary.quality
+    shiftSummary.quality,
   );
   const user = await db.tbl_users.findOne({
     where: {
@@ -1028,7 +1122,7 @@ const getReportByDateAndShift = async (
   date,
   shift_id,
   requester_id,
-  requester_company_id
+  requester_company_id,
 ) => {
   const startAt = date
     ? dayjs(date).startOf("day").toDate()
@@ -1073,7 +1167,7 @@ const getReportByDateAndShift = async (
   const timecardByMachines = timecardDetails.reduce((acc, cur) => {
     const { tbl_mch } = cur;
     const foundMachine = acc.find(
-      (timecardByMachine) => timecardByMachine.machine.id === tbl_mch.id
+      (timecardByMachine) => timecardByMachine.machine.id === tbl_mch.id,
     );
     if (foundMachine) {
       foundMachine.timecards.push(cur);
@@ -1094,7 +1188,7 @@ const getReportByDateAndShift = async (
   const machineTimecardByWorkCenter = timecardByMachines.reduce((acc, cur) => {
     const { workCenter, machine } = cur;
     const foundWorkCenter = acc.find(
-      (wc) => wc.workCenter.wc_id === workCenter.wc_id
+      (wc) => wc.workCenter.wc_id === workCenter.wc_id,
     );
     if (foundWorkCenter) {
       foundWorkCenter.machines.push(cur);
@@ -1121,7 +1215,7 @@ const getReportByDateAndShift = async (
       const { timecards } = cur;
       const totalWorkHours = timecards.reduce(
         (acc, cur) => acc + cur.work_hours,
-        0
+        0,
       );
       return acc + totalWorkHours;
     }, 0);
@@ -1133,7 +1227,7 @@ const getReportByDateAndShift = async (
           acc +
           cur.tbl_time_card_defects.reduce(
             (acc, defect) => (acc += defect.qty),
-            0
+            0,
           )
         );
       }, 0);
@@ -1173,14 +1267,14 @@ const getReportByDateAndShift = async (
             acc +
             cur.tbl_time_card_defects.reduce(
               (acc, defect) => (acc += defect.qty),
-              0
+              0,
             )
           );
         }, 0);
 
         const totalQty = timecards.reduce(
           (acc, cur) => acc + Number(cur.qty),
-          0
+          0,
         );
 
         return {
@@ -1218,7 +1312,7 @@ const getReportByDateAndShift = async (
               work_hours: isDownTime ? 0 : work_hours,
               defects: tbl_time_card_defects.reduce(
                 (acc, defect) => (acc += defect.qty),
-                0
+                0,
               ),
               downtime: isDownTime ? work_hours : 0,
             };
@@ -1288,28 +1382,28 @@ const getReportByDateAndShift = async (
               machine.total_standard_qty += standard_pcs;
               machine.total_plan_hours += work_hours;
               return timecardDetail;
-            })
+            }),
           );
           const allQty = machine.total_qty + machine.total_defects;
           machine.availability =
             Math.round(
-              (machine.total_work_hours / machine.total_plan_hours) * 100 * 100
+              (machine.total_work_hours / machine.total_plan_hours) * 100 * 100,
             ) / 100 || 0;
           machine.quality_rate =
             Math.round((machine.total_qty / allQty) * 100 * 100) / 100 || 0;
           machine.performance =
             Math.round(
-              (machine.total_qty / machine.total_standard_qty) * 100 * 100
+              (machine.total_qty / machine.total_standard_qty) * 100 * 100,
             ) / 100;
           machine.oee = getOEEValue(
             machine.performance,
             machine.quality_rate,
-            machine.availability
+            machine.availability,
           );
           total_standard_qty_by_wc += machine.total_standard_qty;
           total_plan_hour_by_wc += machine.total_plan_hours;
           total_downtime_by_wc += machine.total_downtime;
-        })
+        }),
       );
       wcData.total_qty = wcData.total_qty.toFixed(2);
       wcData.total_acc_qty = wcData.total_acc_qty.toFixed(2);
@@ -1324,25 +1418,25 @@ const getReportByDateAndShift = async (
       wcData.availability =
         (
           Math.round(
-            (wcData.total_work_hours / total_plan_hour_by_wc) * 100 * 100
+            (wcData.total_work_hours / total_plan_hour_by_wc) * 100 * 100,
           ) / 100
         ).toFixed() || 0;
       wcData.quality_rate =
         (Math.round((wcData.total_qty / allQty) * 100 * 100) / 100).toFixed(
-          2
+          2,
         ) || 0;
       wcData.performance =
         (
           Math.round(
-            (wcData.total_qty / total_standard_qty_by_wc) * 100 * 100
+            (wcData.total_qty / total_standard_qty_by_wc) * 100 * 100,
           ) / 100
         ).toFixed(2) || 0;
       wcData.oee = getOEEValue(
         wcData.performance,
         wcData.quality_rate,
-        wcData.availability
+        wcData.availability,
       );
-    })
+    }),
   );
 
   const report = {};
@@ -1354,7 +1448,7 @@ const getReportByDateAndShift = async (
       100 || 0;
   report.quality_rate =
     Math.round(
-      (report_data.qty / (report_data.qty + report_data.defect)) * 100 * 100
+      (report_data.qty / (report_data.qty + report_data.defect)) * 100 * 100,
     ) / 100 || 0;
   report.performance =
     Math.round((report_data.qty / report_data.standard_pcs) * 100 * 100) /
@@ -1362,7 +1456,7 @@ const getReportByDateAndShift = async (
   report.oee = getOEEValue(
     report.performance,
     report.availability,
-    report.quality_rate
+    report.quality_rate,
   );
 
   const user = await db.tbl_users.findOne({ where: { id: requester_id } });
@@ -1403,9 +1497,9 @@ exports.get_time_card_report = async (req, res) => {
           shift_id,
           requester_id,
           is_leader == "true",
-          requester_company_id
-        )
-      )
+          requester_company_id,
+        ),
+      ),
     );
     res.status(200).send(result);
   } catch (error) {
@@ -1434,8 +1528,8 @@ exports.getdeletejobbycompany = async (req, res) =>
 exports.list_doc_running_no_option = async (req, res) =>
   res.json(
     await tbl_time_card_service.list_doc_running_no_option(
-      req.params.company_id
-    )
+      req.params.company_id,
+    ),
   );
 
 exports.listtimecardWorkOrderOptions = async (req, res) =>
@@ -1443,8 +1537,8 @@ exports.listtimecardWorkOrderOptions = async (req, res) =>
     .status(200)
     .send(
       await tbl_time_card_service.listtimecardWorkOrderOptions(
-        req.params.company_id
-      )
+        req.params.company_id,
+      ),
     );
 
 exports.time_card_detail_check_opn_id_ues = async (req, res) =>
@@ -1452,6 +1546,169 @@ exports.time_card_detail_check_opn_id_ues = async (req, res) =>
     .status(200)
     .send(
       await tbl_time_card_service.time_card_detail_check_opn_id_ues(
-        req.params.opn_id
-      )
+        req.params.opn_id,
+      ),
     );
+
+exports.InsertdataTimecardFromEcons = async (req, res) => {
+  let checkdata_success = 0;
+  let checkdata_fail = 0;
+  try {
+    //         const result = [
+    //   {
+    //     "emp_id": "อ227",
+    //     "machine_id": "SW33",
+    //     "opn_id": "100",
+    //     "qty": 278.5050798,
+    //     "work_hours": "12",
+    //     "shift_id": "O",
+    //     "wc_id": "SW02",
+    //     "refmfg": "C2100331",
+    //     "batch": "1",
+    //     "tcdate": "2025-06-05 08:00:00",
+    //     "times": "10:00:00"
+    //   }
+    // ];
+    const result = await tbl_time_card_service.V_TimecardAll_Data_From_Econs();
+    // console.log("result");
+    // console.log(result);
+    // return  res.status(400).json({ message: "No Data RUNMAST"});
+
+    if (result.length > 0) {
+      const resultRUNMAST = await tbl_time_card_service.ECNfindRUNMAST();
+      if (resultRUNMAST.length > 0) {
+        for (let i = 0; i < result.length; i++) {
+          const x = result[i];
+          try {
+            const prefix = resultRUNMAST[0].PREFIX.trim();
+            const running = resultRUNMAST[0].RUNNING;
+            const totalLength = 8;
+            const runningLength = totalLength - prefix.length;
+            const runningStr = String(running).padStart(runningLength, "0");
+            const freefix = `${prefix}${runningStr}`;
+
+            // DEV SQL Query: ใช้ [dbECN].[dbo]
+            await tbl_time_card_service.createinsertecons(`
+                    INSERT INTO [TFPSERVER].[dbECNTFP].[dbo].[SFC201F]
+                (
+                    [DOC_GRP],
+                    [DOC_NO],
+                    [DOC_SEQ],
+                    [CLOCK],
+                    [COMPCD],
+                    [ERRORS],
+                    [LABCODE],
+                    [MACHCODE],
+                    [MACHHRS],
+                    [OPN],
+                    [ORD],
+                    [PIECES],
+                    [RUNHRS],
+                    [SCRAP],
+                    [SHIFT],
+                    [SUHRS],
+                    [WC],
+                    [ZDATE],
+                    [REFMFG],
+                    [TYPEMFG],
+                    [GROUPCODE],
+                    [SEQ],
+                    [DOC_REF1],
+                    [SITE],
+                    [USERDEFC1],
+                    [USERDEFC2],
+                    [USERDEFN1],
+                    [USERDEFN2],
+                    [USERDEFD1],
+                    [USERDEFD2],
+                    [USERDEFB1],
+                    [USERDEFB2],
+                    [USERDEFT1],
+                    [USERDEFT2]
+                )
+                VALUES
+                (
+                    '${resultRUNMAST[0].PREFIX}',
+                   '${freefix}',
+                    '${String(i + 1).padStart(4, "0")}',
+                    '${x.emp_id}',
+                    'N',
+                    '',
+                    '01',
+                    '${x.machine_id}',
+                    0,
+                    '${x.opn_id}',
+                    '${x.ORD}',
+                     ${x.qty},
+                   ${x.work_hours},
+                    0,
+                    '${x.shift_id}',
+                    0,
+                  '${x.wc_id}',
+                  GETDATE(),
+                   '${x.refmfg}',
+                    'N',
+                    '${resultRUNMAST[0].PREFIX}',
+                    '',
+                   '',
+                    '000',
+                   '${x.refmfg}',
+                    '${x.batch}',
+                    0,
+                    0,
+                    '${x.tcdate}',
+                    '',
+                    0,
+                    0,
+                    '${x.times}',
+                    ''
+                );
+                `);
+
+            await tbl_time_card_service.updatetimecad_details(x.id, {
+              erp_flag: "1",
+            });
+
+            checkdata_success++;
+          } catch (error) {
+            checkdata_fail++;
+            console.error(error);
+          }
+          if (i === result.length - 1) {
+            await tbl_time_card_service.updaterunningecons(
+              resultRUNMAST[0].RUNNING + 1,
+            );
+
+            if (res) {
+              res.status(200).json({
+                total: result.length,
+                success: checkdata_success,
+                fail: checkdata_fail,
+                message: `Insert data from Econs completed. Success: ${checkdata_success}, Fail: ${checkdata_fail}`,
+              });
+            } else {
+              // ถ้าเรียกจาก cron job ให้ log แทน
+              return {
+                total: result.length,
+                success: checkdata_success,
+                fail: checkdata_fail,
+                message: `Insert data from Econs completed. Success: ${checkdata_success}, Fail: ${checkdata_fail}`,
+              };
+            }
+          }
+        }
+      } else {
+        res.status(400).json({ message: "No Data RUNMAST" });
+      }
+    } else {
+      res.status(200).json({
+        total: result.length,
+        success: checkdata_success,
+        fail: checkdata_fail,
+        message: `Insert data from Econs completed. Success: ${checkdata_success}, Fail: ${checkdata_fail}`,
+      });
+    }
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};

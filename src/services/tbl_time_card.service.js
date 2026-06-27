@@ -85,6 +85,9 @@ exports.get_ord_by_id = async (ord_id) =>
 exports.list = async (company_id) =>
   await tbl_time_card_repo.find_all(company_id);
 
+exports.find_all_timecard_list = async (company_id, query) =>
+  await tbl_time_card_repo.find_all_timecard_list(company_id, query);
+
 exports.create = async (data) => {
   // const machine = await tbl_time_card_repo.find_by_company_id_and_tim(data.company_id, data.machine_id)
   // if (machine) {
@@ -104,12 +107,31 @@ exports.list_doc_running_no_option = async (company_id) =>
   await tbl_time_card_repo.list_doc_running_no_option(company_id);
 
 exports.listtimecardWorkOrderOptions = async (company_id) => {
-  const result = await tbl_time_card_repo.listtimecardWorkOrderOptions(
-    company_id
-  );
+  const result =
+    await tbl_time_card_repo.listtimecardWorkOrderOptions(company_id);
   return result;
 };
 
 exports.time_card_detail_check_opn_id_ues = async (opn_id) => {
   return await tbl_time_card_repo.time_card_detail_check_opn_id_ues(opn_id);
 };
+
+exports.V_Timecard_From_Econs = async (refmfg) =>
+  await tbl_time_card_repo.V_Timecard_From_Econs(refmfg);
+
+exports.DISTINCTrefmfgV_Timecard_From_Econs = async () =>
+  await tbl_time_card_repo.DISTINCTrefmfgV_Timecard_From_Econs();
+
+exports.ECNfindRUNMAST = async () => await tbl_time_card_repo.ECNfindRUNMAST();
+
+exports.createinsertecons = async (data) =>
+  await tbl_time_card_repo.createinsertecons(data);
+
+exports.updaterunningecons = async (running) =>
+  await tbl_time_card_repo.updaterunningecons(running);
+
+exports.updatetimecad_details = async (id, data) =>
+  await tbl_time_card_repo.updatetimecad_details(id, data);
+
+exports.V_TimecardAll_Data_From_Econs = async () =>
+  await tbl_time_card_repo.V_TimecardAll_Data_From_Econs();

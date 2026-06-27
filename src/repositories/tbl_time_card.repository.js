@@ -1,5 +1,5 @@
 const db = require("../db/models");
-const { Op } = require("sequelize");
+const { Op, Sequelize } = require("sequelize");
 
 exports.find_all = async (company_id) =>
   await db.tbl_time_card.findAll({
@@ -16,6 +16,79 @@ exports.find_all = async (company_id) =>
       {
         model: db.tbl_time_card_detail,
       },
+      {
+        model: db.tbl_mch,
+        include: [
+          {
+            model: db.tbl_work_center,
+            include: [{ model: db.tbl_work_center_group }],
+          },
+        ],
+      },
+      { model: db.tbl_opn_ord },
+      { model: db.doc_running },
+    ],
+    order: [["created_at", "DESC"]],
+  });
+
+// exports.find_all_timecard_list = async (company_id) =>
+// await db.tbl_time_card.findAll({
+//   where: { company_id },
+//   include: [
+//     db.tbl_worker,
+//     {
+//       model: db.tbl_mch,
+//       include: [
+//         {
+//           model: db.tbl_work_center,
+//           include: [{ model: db.tbl_work_center_group }],
+//         },
+//       ],
+//     },
+//     { model: db.tbl_opn_ord },
+//     {
+//       model: db.tbl_time_card_detail,
+//       attributes: ["mch_id", "wo_running_no"], // ดึงแค่คอลัมน์ที่ใช้จริง
+//       separate: true, // แยก query ของ hasMany กัน row ระเบิด
+//     },
+//     { model: db.doc_running },
+//   ],
+//   order: [["created_at", "DESC"]],
+// });query.selectedStatus
+exports.find_all_timecard_list = async (company_id, query) =>
+  await db.tbl_time_card.findAll({
+    where: {
+      company_id,
+      ...(query.selectedStatus && { status: query.selectedStatus }),
+    },
+    attributes: {
+      include: [
+        [
+          db.Sequelize.literal(`(
+        STUFF((
+          SELECT ',' + CONVERT(VARCHAR(MAX), d.mch_id)
+          FROM tbl_time_card_detail AS d
+          WHERE d.time_card_id = [tbl_time_card].[id]
+          FOR XML PATH(''), TYPE
+        ).value('.', 'VARCHAR(MAX)'), 1, 1, '')
+      )`),
+          "mch_ids",
+        ],
+        [
+          db.Sequelize.literal(`(
+        STUFF((
+          SELECT ',' + CONVERT(VARCHAR(MAX), d.wo_running_no)
+          FROM tbl_time_card_detail AS d
+          WHERE d.time_card_id = [tbl_time_card].[id]
+          FOR XML PATH(''), TYPE
+        ).value('.', 'VARCHAR(MAX)'), 1, 1, '')
+      )`),
+          "wo_running_nos",
+        ],
+      ],
+    },
+    include: [
+      db.tbl_worker,
       {
         model: db.tbl_mch,
         include: [
@@ -151,7 +224,7 @@ exports.post_time_card = async (timeCard) => {
               wc_id = machine.work_center_id;
             }
             const opnOrd = opnOrdList.find(
-              (opn) => opn.id === detail.opn_ord_id
+              (opn) => opn.id === detail.opn_ord_id,
             );
             const workCenter = await db.tbl_work_center.findOne({
               where: {
@@ -179,7 +252,7 @@ exports.post_time_card = async (timeCard) => {
             opnOrd.act_foh_cost = foh_cost + Number(opnOrd.act_foh_cost);
             opnOrd.act_voh_cost = voh_cost + Number(opnOrd.act_voh_cost);
           }
-        })
+        }),
       );
       timecardHeader.status = "post";
       await Promise.all([
@@ -232,12 +305,12 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
 
       console.log(
         "📄 Timecard Header:",
-        JSON.stringify(timecardHeader, null, 2)
+        JSON.stringify(timecardHeader, null, 2),
       );
       console.log("📝 Timecard Details count:", timecardDetails.length);
       console.log(
         "📝 Timecard Details:",
-        JSON.stringify(timecardDetails, null, 2)
+        JSON.stringify(timecardDetails, null, 2),
       );
 
       // *** 2. รวบรวม Operation Order IDs ***
@@ -266,7 +339,7 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
       console.log("📦 Operation Orders loaded:", opnOrdList.length);
       opnOrdList.forEach((opn, index) => {
         console.log(
-          `📦 OpnOrd[${index}] ID:${opn.id}, receive_qty:${opn.receive_qty}, act_labor_cost:${opn.act_labor_cost}`
+          `📦 OpnOrd[${index}] ID:${opn.id}, receive_qty:${opn.receive_qty}, act_labor_cost:${opn.act_labor_cost}`,
         );
       });
 
@@ -281,7 +354,7 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
        */
       const calculateOverlapHours = (start1, end1, start2, end2) => {
         console.log(
-          `🕐 Calculating overlap between ${start1}-${end1} and ${start2}-${end2}`
+          `🕐 Calculating overlap between ${start1}-${end1} and ${start2}-${end2}`,
         );
 
         // แปลงเวลาจากรูปแบบ "HH:MM:SS" เป็นนาที
@@ -297,7 +370,7 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
         const end2Min = timeToMinutes(end2);
 
         console.log(
-          `🕐 Converted to minutes: Work(${start1Min}-${end1Min}), OT(${start2Min}-${end2Min})`
+          `🕐 Converted to minutes: Work(${start1Min}-${end1Min}), OT(${start2Min}-${end2Min})`,
         );
 
         // หาจุดเริ่มต้นและสิ้นสุดของช่วงที่ซ้อนทับ
@@ -308,7 +381,7 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
         if (overlapStart < overlapEnd) {
           const overlapHours = (overlapEnd - overlapStart) / 60;
           console.log(
-            `🕐 Overlap found: ${overlapHours} hours (${overlapStart}-${overlapEnd} minutes)`
+            `🕐 Overlap found: ${overlapHours} hours (${overlapStart}-${overlapEnd} minutes)`,
           );
           return overlapHours; // แปลงนาทีเป็นชั่วโมง
         }
@@ -323,10 +396,10 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
           console.log(
             `\n⚙️ Processing detail ${detailIndex + 1}/${
               timecardDetails.length
-            }`
+            }`,
           );
           console.log(
-            `⚙️ Detail ID: ${detail.id}, downtime_id: ${detail.downtime_id}, opn_ord_id: ${detail.opn_ord_id}`
+            `⚙️ Detail ID: ${detail.id}, downtime_id: ${detail.downtime_id}, opn_ord_id: ${detail.opn_ord_id}`,
           );
 
           // ประมวลผลเฉพาะรายการที่ไม่ใช่ downtime และมี operation order
@@ -351,7 +424,7 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
 
             // *** 5.2 ดึงข้อมูล Operation Order และ Work Center ***
             const opnOrd = opnOrdList.find(
-              (opn) => opn.id === detail.opn_ord_id
+              (opn) => opn.id === detail.opn_ord_id,
             );
 
             const workCenter = await db.tbl_work_center.findOne({
@@ -363,7 +436,7 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
 
             console.log(`📋 Operation Order ID: ${opnOrd?.id}`);
             console.log(
-              `🏭 Work Center: ${workCenter?.wc_name}, labor_rate: ${workCenter?.labor_rate}`
+              `🏭 Work Center: ${workCenter?.wc_name}, labor_rate: ${workCenter?.labor_rate}`,
             );
 
             // *** 5.3 ดึงข้อมูลค่าใช้จ่ายและเวลาทำงาน ***
@@ -372,10 +445,10 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
               detail;
 
             console.log(
-              `💰 Initial rates - labor: ${labor_rate}, foh: ${foh_rate}, voh: ${voh_rate}`
+              `💰 Initial rates - labor: ${labor_rate}, foh: ${foh_rate}, voh: ${voh_rate}`,
             );
             console.log(
-              `⏱️ Work details - hours: ${work_hours}, qty: ${qty}, setup: ${setup_time}`
+              `⏱️ Work details - hours: ${work_hours}, qty: ${qty}, setup: ${setup_time}`,
             );
             console.log(`⏰ Time range: ${time_start} - ${time_end}`);
 
@@ -387,7 +460,7 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
 
             console.log(
               "👷 Worker details:",
-              JSON.stringify(get_labar_rate, null, 2)
+              JSON.stringify(get_labar_rate, null, 2),
             );
 
             if (get_labar_rate && get_labar_rate.emp_rate) {
@@ -398,7 +471,7 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
                 "⚠️ No labor rate found for worker ID:",
                 detail.worker_id,
                 "- using work center rate:",
-                labor_rate
+                labor_rate,
               );
               // ใช้ labor_rate จาก work center ที่ได้มาตั้งแต่ต้น
             }
@@ -411,7 +484,7 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
               const oldReceiveQty = opnOrd.receive_qty;
               opnOrd.receive_qty = Number(qty) + Number(opnOrd.receive_qty);
               console.log(
-                `📊 Updated receive_qty: ${oldReceiveQty} + ${qty} = ${opnOrd.receive_qty}`
+                `📊 Updated receive_qty: ${oldReceiveQty} + ${qty} = ${opnOrd.receive_qty}`,
               );
             } else {
               console.log(`📊 Skipping qty update (qty = ${qty})`);
@@ -423,11 +496,11 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
               opnOrd.act_setup_time =
                 Number(setup_time) + Number(opnOrd.act_setup_time);
               console.log(
-                `📊 Updated setup_time: ${oldSetupTime} + ${setup_time} = ${opnOrd.act_setup_time}`
+                `📊 Updated setup_time: ${oldSetupTime} + ${setup_time} = ${opnOrd.act_setup_time}`,
               );
             } else {
               console.log(
-                `📊 Skipping setup_time update (setup_time = ${setup_time})`
+                `📊 Skipping setup_time update (setup_time = ${setup_time})`,
               );
             }
 
@@ -437,11 +510,11 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
               opnOrd.act_prod_time =
                 Number(work_hours) + Number(opnOrd.act_prod_time);
               console.log(
-                `📊 Updated prod_time: ${oldProdTime} + ${work_hours} = ${opnOrd.act_prod_time}`
+                `📊 Updated prod_time: ${oldProdTime} + ${work_hours} = ${opnOrd.act_prod_time}`,
               );
             } else {
               console.log(
-                `📊 Skipping prod_time update (work_hours = ${work_hours})`
+                `📊 Skipping prod_time update (work_hours = ${work_hours})`,
               );
             }
 
@@ -451,7 +524,7 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
             let total_ot_cost = 0; // รวมค่าแรง OT
 
             console.log(
-              `💰 Initial calculation - work_hours: ${work_hours}, labor_rate: ${labor_rate}`
+              `💰 Initial calculation - work_hours: ${work_hours}, labor_rate: ${labor_rate}`,
             );
 
             // *** 5.6 ตรวจสอบและคำนวณค่าแรง Overtime ***
@@ -474,7 +547,7 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
                 `;
 
                 console.log(
-                  `🔍 Querying OT data for machine_id: ${detail.mch_id}`
+                  `🔍 Querying OT data for machine_id: ${detail.mch_id}`,
                 );
 
                 // Execute query โดยใส่ machine_id
@@ -486,7 +559,7 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
 
                 console.log(
                   `🔍 Found ${otResults?.length || 0} OT periods:`,
-                  JSON.stringify(otResults, null, 2)
+                  JSON.stringify(otResults, null, 2),
                 );
 
                 // *** 5.7 คำนวณค่าแรง OT ถ้าพบข้อมูล ***
@@ -529,10 +602,10 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
 
                     console.log(`\n🕐 Processing OT period ${otIndex + 1}:`);
                     console.log(
-                      `   - Original: ${ot_start_time} - ${ot_end_time}`
+                      `   - Original: ${ot_start_time} - ${ot_end_time}`,
                     );
                     console.log(
-                      `   - Formatted: ${otStartFormatted} - ${otEndFormatted}`
+                      `   - Formatted: ${otStartFormatted} - ${otEndFormatted}`,
                     );
                     console.log(`   - Rate: ${ot_rate}`);
 
@@ -541,7 +614,7 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
                       console.warn(
                         `⚠️ Invalid OT time format, skipping period ${
                           otIndex + 1
-                        }`
+                        }`,
                       );
                       return;
                     }
@@ -551,7 +624,7 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
                       time_start, // เวลาเริ่มทำงานจาก time card
                       time_end, // เวลาเลิกทำงานจาก time card
                       otStartFormatted, // เวลาเริ่มต้น OT (แปลงแล้ว)
-                      otEndFormatted // เวลาสิ้นสุด OT (แปลงแล้ว)
+                      otEndFormatted, // เวลาสิ้นสุด OT (แปลงแล้ว)
                     );
 
                     // ถ้ามีชั่วโมง OT ให้คำนวณค่าแรง OT
@@ -565,13 +638,13 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
                       console.log(`   - OT Rate Multiplier: ${ot_rate}`);
                       console.log(`   - OT Hours: ${otHours}`);
                       console.log(
-                        `   - OT Cost: (${labor_rate} × ${ot_rate}) × ${otHours} = ${ot_labor_cost}`
+                        `   - OT Cost: (${labor_rate} × ${ot_rate}) × ${otHours} = ${ot_labor_cost}`,
                       );
                       console.log(
-                        `   - Total OT Hours so far: ${total_ot_hours}`
+                        `   - Total OT Hours so far: ${total_ot_hours}`,
                       );
                       console.log(
-                        `   - Total OT Cost so far: ${total_ot_cost}`
+                        `   - Total OT Cost so far: ${total_ot_cost}`,
                       );
                     }
                   });
@@ -580,10 +653,10 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
                   if (total_ot_hours > 0) {
                     regular_work_hours = Math.max(
                       0,
-                      (work_hours || 0) - total_ot_hours
+                      (work_hours || 0) - total_ot_hours,
                     );
                     console.log(
-                      `⚖️ Adjusted regular work hours: ${work_hours} - ${total_ot_hours} = ${regular_work_hours}`
+                      `⚖️ Adjusted regular work hours: ${work_hours} - ${total_ot_hours} = ${regular_work_hours}`,
                     );
                   }
                 }
@@ -594,7 +667,7 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
               }
             } else {
               console.log(
-                "ℹ️ Skipping OT calculation - missing machine_id or time range"
+                "ℹ️ Skipping OT calculation - missing machine_id or time range",
               );
             }
 
@@ -607,18 +680,18 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
             console.log(`💰 Final cost calculation:`);
             console.log(`   - Regular work hours: ${regular_work_hours}`);
             console.log(
-              `   - Regular labor cost: ${labor_rate} × ${regular_work_hours} = ${regular_labor_cost}`
+              `   - Regular labor cost: ${labor_rate} × ${regular_work_hours} = ${regular_labor_cost}`,
             );
             console.log(`   - OT work hours: ${total_ot_hours}`);
             console.log(`   - OT labor cost: ${total_ot_cost}`);
             console.log(
-              `   - Total labor cost: ${regular_labor_cost} + ${total_ot_cost} = ${total_labor_cost}`
+              `   - Total labor cost: ${regular_labor_cost} + ${total_ot_cost} = ${total_labor_cost}`,
             );
             console.log(
-              `   - FOH cost: ${foh_rate} × ${work_hours || 0} = ${foh_cost}`
+              `   - FOH cost: ${foh_rate} × ${work_hours || 0} = ${foh_cost}`,
             );
             console.log(
-              `   - VOH cost: ${voh_rate} × ${work_hours || 0} = ${voh_cost}`
+              `   - VOH cost: ${voh_rate} × ${work_hours || 0} = ${voh_cost}`,
             );
 
             // *** 5.10 อัพเดทค่าใช้จ่ายใน Operation Order ***
@@ -633,18 +706,18 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
 
             console.log(`📊 Updated operation costs:`);
             console.log(
-              `   - Labor: ${oldLaborCost} + ${total_labor_cost} = ${opnOrd.act_labor_cost}`
+              `   - Labor: ${oldLaborCost} + ${total_labor_cost} = ${opnOrd.act_labor_cost}`,
             );
             console.log(
-              `   - FOH: ${oldFohCost} + ${foh_cost} = ${opnOrd.act_foh_cost}`
+              `   - FOH: ${oldFohCost} + ${foh_cost} = ${opnOrd.act_foh_cost}`,
             );
             console.log(
-              `   - VOH: ${oldVohCost} + ${voh_cost} = ${opnOrd.act_voh_cost}`
+              `   - VOH: ${oldVohCost} + ${voh_cost} = ${opnOrd.act_voh_cost}`,
             );
           } else {
             console.log("⏭️ Skipping detail (downtime or no operation order)");
           }
-        })
+        }),
       );
 
       // *** 6. บันทึกการเปลี่ยนแปลงทั้งหมด ***
@@ -658,7 +731,7 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
       // ตรวจสอบโหมด debug หรือ dry run
       if (debug) {
         console.log(
-          "🚨 DEBUG MODE: Rolling back transaction to prevent data changes"
+          "🚨 DEBUG MODE: Rolling back transaction to prevent data changes",
         );
         console.log("📋 Changes that WOULD be saved:");
         console.log(`   - Timecard status: ${oldStatus} → post`);
@@ -727,7 +800,7 @@ exports.post_time_card_v2 = async (timeCard, options = {}) => {
         console.log(
           `   - OpnOrd[${index + 1}] ID:${opn.id} - Labor: ${
             opn.act_labor_cost
-          }, FOH: ${opn.act_foh_cost}, VOH: ${opn.act_voh_cost}`
+          }, FOH: ${opn.act_foh_cost}, VOH: ${opn.act_voh_cost}`,
         );
       });
     });
@@ -896,7 +969,7 @@ exports.update_defect = async (defect) =>
 exports.list_work_order_option = async (company_id) => {
   const queryResult = await db.sequelize.query(
     `SELECT DISTINCT doc_running_no from tbl_opn_ord where company_id = ${company_id}`,
-    { type: db.sequelize.QueryTypes.SELECT }
+    { type: db.sequelize.QueryTypes.SELECT },
   );
   return queryResult;
 };
@@ -971,7 +1044,7 @@ exports.getdeletejobbycompany = async (data) =>
 exports.list_doc_running_no_option = async (company_id) => {
   const queryResult = await db.sequelize.query(
     `SELECT DISTINCT doc_running_no from tbl_time_card where company_id = ${company_id}`,
-    { type: db.sequelize.QueryTypes.SELECT }
+    { type: db.sequelize.QueryTypes.SELECT },
   );
   return queryResult;
 };
@@ -979,7 +1052,7 @@ exports.list_doc_running_no_option = async (company_id) => {
 exports.listtimecardWorkOrderOptions = async (company_id) => {
   const queryResult = await db.sequelize.query(
     `SELECT DISTINCT wo_running_no from tbl_time_card where company_id = ${company_id}`,
-    { type: db.sequelize.QueryTypes.SELECT }
+    { type: db.sequelize.QueryTypes.SELECT },
   );
   return queryResult;
 };
@@ -987,7 +1060,63 @@ exports.listtimecardWorkOrderOptions = async (company_id) => {
 exports.time_card_detail_check_opn_id_ues = async (opn_id) => {
   const queryResult = await db.sequelize.query(
     `SELECT COUNT(id) as ctc from tbl_time_card_detail where opn_ord_id = ${opn_id}`,
-    { type: db.sequelize.QueryTypes.SELECT }
+    { type: db.sequelize.QueryTypes.SELECT },
   );
   return queryResult;
 };
+
+exports.V_Timecard_From_Econs = async (refmfg) =>
+  await db.sequelize.query(
+    `select * from V_Import_SFC201F where refmfg='${refmfg}';`,
+    {
+      type: db.sequelize.QueryTypes.SELECT,
+    },
+  );
+
+exports.V_TimecardAll_Data_From_Econs = async (refmfg) =>
+  await db.sequelize.query(`select * from V_Import_SFC201F;`, {
+    type: db.sequelize.QueryTypes.SELECT,
+  });
+
+exports.DISTINCTrefmfgV_Timecard_From_Econs = async () =>
+  await db.sequelize.query(`select DISTINCT refmfg from V_Import_SFC201F;`, {
+    type: db.sequelize.QueryTypes.SELECT,
+  });
+
+// DEV SQL Query:
+//   select PREFIX,RUNNING,USERDEFN1 from [dbECN].[dbo].[RUNMAST]
+// where GROUPCODE = 'OEE' and DOCTYPE = 'TC'
+
+exports.ECNfindRUNMAST = async () =>
+  await db.sequelize.query(
+    `select PREFIX,RUNNING,USERDEFN1 from [TFPSERVER].[dbECNTFP].[dbo].[RUNMAST]
+      where GROUPCODE = 'OEE' and DOCTYPE = 'TC';`,
+    {
+      type: db.sequelize.QueryTypes.SELECT,
+    },
+  );
+
+exports.createinsertecons = async (datainsert) =>
+  await db.sequelize.query(`${datainsert}`, {
+    type: db.sequelize.QueryTypes.SELECT,
+  });
+
+// DEV SQL Query:
+//   update [dbECN].[dbo].[RUNMAST]
+//  set RUNNING = ${running} where GROUPCODE = 'OEE' and DOCTYPE = 'TC';
+exports.updaterunningecons = async (running) =>
+  await db.sequelize.query(
+    `update [TFPSERVER].[dbECNTFP].[dbo].[RUNMAST]
+ set RUNNING = ${running} where GROUPCODE = 'OEE' and DOCTYPE = 'TC';
+`,
+    {
+      type: db.sequelize.QueryTypes.SELECT,
+    },
+  );
+
+exports.updatetimecad_details = async (id, data) =>
+  await db.tbl_time_card_detail.update(data, {
+    where: {
+      id: id,
+    },
+  });
